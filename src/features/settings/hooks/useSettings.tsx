@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { AppSettings, DEFAULT_SETTINGS } from '../types/settings';
 import { db } from '../../../core/db';
+import { syncManager } from '../../../core/syncService';
 
 /**
  * Persitence Keys - V7 (Fresh Start)
@@ -91,6 +92,9 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
             // b. IndexedDB (Robust storage for everything)
             db.set('settings', DB_VERSION_KEY, next).catch(console.error);
+
+            // c. Cloud Sync
+            syncManager.syncSettings(next);
 
             return next;
         });

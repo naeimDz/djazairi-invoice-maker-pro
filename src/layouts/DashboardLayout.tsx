@@ -14,6 +14,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Button } from '@/shared/ui/button';
 import { Link } from 'react-router-dom';
+import { SyncStatusIndicator } from '@/features/sync/components/SyncStatusIndicator';
 
 interface DashboardLayoutProps {
     children: React.ReactNode;
@@ -109,7 +110,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeView 
                     </nav>
 
                     {/* Sidebar Footer */}
-                    <div className="p-6 border-t border-white/10">
+                    <div className="p-6 border-t border-white/10 space-y-4">
+                        <SyncStatusIndicator isRTL={isRTL} isSidebarOpen={isSidebarOpen} />
+
                         <div className={cn("flex items-center justify-between", !isSidebarOpen && "flex-col gap-6")}>
                             {isRTL ? (
                                 <Link

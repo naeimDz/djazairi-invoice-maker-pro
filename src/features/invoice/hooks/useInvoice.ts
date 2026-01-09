@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { InvoiceItem, InvoiceData } from '../types/invoice';
 import { useSettings } from '../../settings/hooks/useSettings';
 import { db } from '../../../core/db';
+import { syncManager } from '../../../core/syncService';
 
 const STORAGE_KEY_PREFIX = 'invoice_draft_';
 
@@ -31,8 +32,8 @@ export const useInvoice = () => {
         { id: '1', description: '', quantity: 1, price: 0 },
     ]);
 
-    // Descriptions History from DB
-    const [descriptionHistory, setDescriptionHistory] = useState<string[]>([]);
+    // Saving State
+    const [isSaving, setIsSaving] = useState(false);
 
     // 1. Sync Invoice Language with App Language (if not manually overridden in this session)
     useEffect(() => {
@@ -45,10 +46,6 @@ export const useInvoice = () => {
     // 2. Load History & Draft on Mount/Session Change
     useEffect(() => {
         const loadInitialData = async () => {
-            // Load History
-            const history = await db.get<string[]>('resources', 'product_history');
-            if (history) setDescriptionHistory(history);
-
             // Load Draft
             const savedData = localStorage.getItem(`${STORAGE_KEY_PREFIX}${sessionId}`);
             if (savedData) {
@@ -102,32 +99,22 @@ export const useInvoice = () => {
             settings: settingsSnapshot
         };
 
+        setIsSaving(true);
         localStorage.setItem(`${STORAGE_KEY_PREFIX}${sessionId}`, JSON.stringify(data));
         // Slow save to DB to avoid jank
         const timer = setTimeout(() => {
-            db.saveInvoice(data).catch(err => console.warn("DB Background Save deferred", err));
+            db.saveInvoice(data)
+                .then(() => {
+                    // Trigger Cloud Sync
+                    syncManager.requestInvoiceSync(data);
+                })
+                .catch(err => console.warn("DB Background Save deferred", err))
+                .finally(() => setIsSaving(false));
         }, 1000);
 
         return () => clearTimeout(timer);
     }, [sessionId, invoiceNumber, invoiceDate, customerName, customerAddress, items, invoiceLang, status, settings]);
 
-    // 5. Update Product Memory in DB
-    useEffect(() => {
-        const currentDescriptions = items
-            .map(i => i.description.trim())
-            .filter(d => d.length > 3);
-
-        if (currentDescriptions.length > 0) {
-            const updateHistory = async () => {
-                const newHistory = Array.from(new Set([...descriptionHistory, ...currentDescriptions])).slice(0, 50);
-                if (JSON.stringify(newHistory) !== JSON.stringify(descriptionHistory)) {
-                    setDescriptionHistory(newHistory);
-                    await db.set('resources', 'product_history', newHistory);
-                }
-            };
-            updateHistory();
-        }
-    }, [items, descriptionHistory]);
 
     // HANDLERS (Functional Updates for thread safety)
     const addItem = useCallback(() => {
@@ -155,6 +142,7 @@ export const useInvoice = () => {
     }, []);
 
     const clearDraft = useCallback(() => {
+        setIsSaving(false);
         localStorage.removeItem(`${STORAGE_KEY_PREFIX}${sessionId}`);
         const newId = Date.now().toString();
         setSessionId(newId);
@@ -165,6 +153,21 @@ export const useInvoice = () => {
         setStatus('draft');
         hasInitializedDefaults.current = false;
     }, [sessionId]);
+
+    const createNewInvoice = useCallback(() => {
+        // Just generating a new Session ID effectively starts a new "file"
+        // The old one remains in DB as is.
+        const newId = Date.now().toString();
+        setSessionId(newId);
+        setInvoiceNumber('');
+        setCustomerName('');
+        setCustomerAddress('');
+        setItems([{ id: '1', description: '', quantity: 1, price: 0 }]);
+        setStatus('draft');
+        hasInitializedDefaults.current = false;
+        // Clear active session pointer to avoid reloading the old one if refresh happens immediately
+        localStorage.setItem('dz_active_session', newId);
+    }, []);
 
     const recallLastCustomer = useCallback(async () => {
         const last = await db.get<{ name: string, address: string }>('resources', 'last_customer');
@@ -197,12 +200,13 @@ export const useInvoice = () => {
         setStatus,
         items,
         setItems,
-        descriptionHistory,
         addItem,
         updateItem,
         removeItem,
         clearDraft,
         duplicateInvoice,
         recallLastCustomer,
+        createNewInvoice,
+        isSaving
     };
 };

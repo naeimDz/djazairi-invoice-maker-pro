@@ -11,10 +11,17 @@ export interface AppSettings {
 
     // Branding
     logo: string | null; // Base64 supported for offline reliability
-    logoAlignment: 'left' | 'center' | 'right';
 
     // Behavior (TVA Psychology)
     vatBehavior: 'show' | 'hide' | 'inclusive';
+
+    // Business Owner Info (Essential for Algerian invoices)
+    businessName: string;
+    businessAddress: string;
+    businessPhone: string;
+    businessNIF: string;       // Numéro d'Identification Fiscale
+    businessRC: string;        // Registre de Commerce
+    businessBank: string;      // Bank account info (optional)
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -24,6 +31,12 @@ export const DEFAULT_SETTINGS: AppSettings = {
     numberFormat: 'space',
     currencyPlacement: 'after',
     logo: null,
-    logoAlignment: 'right',
-    vatBehavior: 'show'
+    vatBehavior: 'show',
+    // Business Info Defaults (empty, user fills in)
+    businessName: '',
+    businessAddress: '',
+    businessPhone: '',
+    businessNIF: '',
+    businessRC: '',
+    businessBank: ''
 };

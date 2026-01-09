@@ -16,6 +16,8 @@ interface InvoiceHeaderProps {
   status: 'draft' | 'sent' | 'paid';
   setStatus: (status: 'draft' | 'sent' | 'paid') => void;
   duplicateInvoice: () => void;
+  createNewInvoice: () => void;
+  isSaving: boolean;
 }
 
 const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
@@ -27,10 +29,14 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   setInvoiceLang,
   status,
   setStatus,
-  duplicateInvoice
+  duplicateInvoice,
+  createNewInvoice,
+  isSaving
 }) => {
-  const { t } = useTranslation();
-  const isRTL = invoiceLang === 'ar';
+  const { t, i18n } = useTranslation();
+
+  // UI direction follows app language, NOT the invoice document language
+  const isUIRTL = i18n.language === 'ar';
 
   const langOptions = [
     { code: 'ar', label: 'العربية' },
@@ -51,104 +57,117 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-10" dir={isRTL ? 'rtl' : 'ltr'}>
-      {/* Header & Controls Integration */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 pb-10 border-b border-gray-100/50">
-        <div className="space-y-6 flex-1 w-full">
-          <div className="flex flex-wrap items-center gap-3 print:hidden">
-            {/* Discrete Language Picker */}
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-xl w-fit">
-              <Globe className="h-3.5 w-3.5 text-dz-green" />
-              <div className="flex gap-1.5">
-                {langOptions.map((lang) => (
-                  <button
-                    key={lang.code}
-                    onClick={() => setInvoiceLang(lang.code)}
-                    className={cn(
-                      "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all",
-                      invoiceLang === lang.code
-                        ? "bg-dz-green text-white shadow-md shadow-dz-green/20"
-                        : "text-gray-400 hover:text-dz-dark"
-                    )}
-                  >
-                    {lang.code}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="h-8 w-[1px] bg-gray-100 hidden sm:block"></div>
-
-            {/* Status Toggle */}
-            <div className="flex items-center gap-1.5 p-1 bg-gray-50 border border-gray-100 rounded-xl">
-              {(['draft', 'sent', 'paid'] as const).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setStatus(s)}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all",
-                    status === s
-                      ? statusColors[s] + " shadow-sm"
-                      : "text-gray-400 hover:bg-gray-100"
-                  )}
-                >
-                  {statusIcons[s]}
-                  {t(`settings.status${s.charAt(0).toUpperCase() + s.slice(1)}`)}
-                </button>
-              ))}
-            </div>
-
-            <div className="h-8 w-[1px] bg-gray-100 hidden sm:block"></div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={duplicateInvoice}
-                className="text-gray-400 hover:text-dz-green hover:bg-dz-green/5 transition-all outline-none focus:ring-0"
-                title={t('settings.duplicate')}
-              >
-                <Copy className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
-
-          <h1 className="text-6xl md:text-8xl font-black font-heading text-dz-green tracking-tighter leading-none text-start animate-in fade-in slide-in-from-s-4 duration-700">
-            {t('invoiceHeader.title')}
-          </h1>
+    <div className="flex flex-col gap-6" dir={isUIRTL ? 'rtl' : 'ltr'}>
+      {/* === Primary Toolbar: Language & Status (Compact, Top) === */}
+      <div className="flex flex-wrap items-center justify-between gap-4 print:hidden">
+        {/* Left: Language Switcher (Minimal) */}
+        <div className="flex items-center gap-1.5">
+          {langOptions.map((lang) => (
+            <button
+              key={lang.code}
+              onClick={() => setInvoiceLang(lang.code)}
+              className={cn(
+                "h-8 w-8 rounded-full text-[10px] font-black uppercase transition-all flex items-center justify-center",
+                invoiceLang === lang.code
+                  ? "bg-dz-green text-white shadow-lg shadow-dz-green/30"
+                  : "bg-gray-100 text-gray-400 hover:bg-gray-200"
+              )}
+              title={lang.label}
+            >
+              {lang.code.substring(0, 2).toUpperCase()}
+            </button>
+          ))}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full lg:w-auto mt-4 lg:mt-0 animate-in fade-in slide-in-from-e-4 duration-700">
-          <div className="space-y-1.5 text-start">
-            <label htmlFor="invoiceNumber" className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-1 block opacity-60">
+        {/* Right: Status Chips (Clean, Icon-focused) */}
+        <div className="flex items-center gap-1.5">
+          {(['draft', 'sent', 'paid'] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => setStatus(s)}
+              className={cn(
+                "h-8 px-3 rounded-full text-[10px] font-bold flex items-center gap-1.5 transition-all",
+                status === s
+                  ? statusColors[s] + " shadow-sm"
+                  : "bg-gray-50 text-gray-400 hover:bg-gray-100"
+              )}
+            >
+              {statusIcons[s]}
+              <span className="hidden sm:inline">{t(`settings.status${s.charAt(0).toUpperCase() + s.slice(1)}`)}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* === Hero Section: Title + Actions (Clean, Breathable) === */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-8 border-b border-gray-100/50">
+        {/* Title + Save Indicator */}
+        <div className="flex items-baseline gap-4 flex-wrap">
+          <h1 className="text-5xl md:text-7xl font-black font-heading text-dz-green tracking-tighter leading-none animate-in fade-in slide-in-from-s-4 duration-700">
+            {t('invoiceHeader.title')}
+          </h1>
+
+          {/* Minimal Save Indicator (Inline with Title) */}
+          <span className={cn(
+            "text-[9px] font-bold uppercase tracking-widest transition-all",
+            isSaving ? "text-gray-400 animate-pulse" : "text-gray-300"
+          )}>
+            {isSaving ? t('common.saving', '●') : <CheckCircle2 className="h-3 w-3 inline opacity-50" />}
+          </span>
+        </div>
+
+        {/* Invoice Metadata Inputs (Number + Date) */}
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="space-y-1">
+            <label htmlFor="invoiceNumber" className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block">
               {t('invoiceHeader.number')}
             </label>
-            <div className="relative group">
-              <span className="absolute inset-y-0 start-4 flex items-center text-gray-400 font-bold pointer-events-none transition-colors group-within:text-dz-green">#</span>
+            <div className="relative">
+              <span className="absolute inset-y-0 start-3 flex items-center text-gray-400 text-sm font-bold pointer-events-none">#</span>
               <Input
                 id="invoiceNumber"
                 value={invoiceNumber}
                 onChange={(e) => setInvoiceNumber(e.target.value)}
-                className="ps-10 h-14 bg-white border-gray-200 focus:border-dz-green focus:ring-dz-green/20 transition-all font-black text-xl rounded-2xl w-full sm:w-40 text-start"
+                className="ps-8 h-11 w-28 bg-white border-gray-200 focus:border-dz-green focus:ring-dz-green/20 rounded-xl font-bold text-lg"
                 placeholder="001"
               />
             </div>
           </div>
 
-          <div className="space-y-1.5 text-start">
-            <label htmlFor="invoiceDate" className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-1 block opacity-60">
+          <div className="space-y-1">
+            <label htmlFor="invoiceDate" className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block">
               {t('invoiceHeader.date')}
             </label>
-            <div className="relative group">
-              <Calendar className="absolute top-1/2 transform -translate-y-1/2 end-4 h-5 w-5 text-gray-400 group-hover:text-dz-green group-focus-within:text-dz-green transition-colors pointer-events-none" />
+            <div className="relative">
               <Input
                 id="invoiceDate"
                 type="date"
                 value={invoiceDate}
                 onChange={(e) => setInvoiceDate(e.target.value)}
-                className="pe-12 h-14 w-full sm:w-52 bg-white border-gray-200 focus:border-dz-green focus:ring-dz-green/20 transition-all num-ltr font-bold text-lg rounded-2xl"
+                className="h-11 w-40 bg-white border-gray-200 focus:border-dz-green focus:ring-dz-green/20 rounded-xl font-medium num-ltr"
               />
             </div>
+          </div>
+
+          {/* Quick Actions: Grouped Minimally */}
+          <div className="flex items-center gap-1 ms-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={duplicateInvoice}
+              className="h-10 w-10 text-gray-400 hover:text-dz-green hover:bg-dz-green/5 rounded-xl"
+              title={t('settings.duplicate')}
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={createNewInvoice}
+              className="h-10 px-4 text-xs font-bold text-dz-green hover:bg-dz-green hover:text-white rounded-xl transition-all"
+            >
+              + {t('common.newInvoice', 'جديد')}
+            </Button>
           </div>
         </div>
       </div>

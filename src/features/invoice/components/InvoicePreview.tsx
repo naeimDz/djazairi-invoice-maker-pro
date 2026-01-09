@@ -113,41 +113,66 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({
       )}
       dir={isDocRTL ? "rtl" : "ltr"}
     >
-      {/* Branding Section */}
-      {settings.logo && (
-        <div className={cn(
-          "mb-10 flex",
-          settings.logoAlignment === 'left' ? "justify-start" :
-            settings.logoAlignment === 'center' ? "justify-center" : "justify-end"
-        )}>
-          <img src={settings.logo} alt="Business Logo" className="h-28 w-auto object-contain" />
+      {/* === HEADER ROW: Logo + Invoice Title/Number/Date === */}
+      <div className="flex justify-between items-start mb-6 pb-4 border-b-2 border-dz-green/20">
+        {/* Left: Logo (if exists) */}
+        <div className="flex-shrink-0">
+          {settings.logo ? (
+            <img
+              src={settings.logo}
+              alt="Logo"
+              className="h-16 w-auto object-contain print:h-14"
+              style={{ maxWidth: '150px' }}
+            />
+          ) : (
+            settings.businessName && (
+              <p className="text-xl font-black text-dz-dark">{settings.businessName}</p>
+            )
+          )}
         </div>
-      )}
 
-      {/* Header Section */}
-      <div className="flex justify-between items-start mb-12 border-b-2 border-dz-green/10 pb-8">
-        <div className="text-start">
-          <h1 className="text-5xl font-black text-dz-green tracking-tighter leading-none mb-4 uppercase">{getDocT('invoiceHeader.title')}</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">{getDocT('invoiceHeader.number')}</span>
-            <span className="text-2xl font-black text-dz-dark num-ltr">#{invoiceNumber || getDocT('invoiceHeader.unspecified')}</span>
+        {/* Right: Invoice Title + Number + Date */}
+        <div className="text-end">
+          <h1 className="text-3xl font-black text-dz-green tracking-tight leading-none uppercase">
+            {getDocT('invoiceHeader.title')}
+          </h1>
+          <div className="flex items-center justify-end gap-3 mt-2">
+            <span className="text-xs text-gray-400">{getDocT('invoiceHeader.number')}</span>
+            <span className="text-lg font-black text-dz-dark num-ltr">#{invoiceNumber || '---'}</span>
           </div>
-        </div>
-        <div className="text-start flex flex-col items-start gap-1 bg-dz-neutral/30 p-5 rounded-2xl border border-dz-neutral border-dashed min-w-[180px]">
-          <p className="text-[10px] font-black text-dz-green/60 uppercase tracking-[0.2em]">{getDocT('invoiceHeader.date')}</p>
-          <p className="text-xl font-black text-dz-dark whitespace-nowrap num-ltr">{formatDate(invoiceDate) || getDocT('invoiceHeader.unspecified')}</p>
+          <p className="text-sm text-gray-500 num-ltr mt-1">{formatDate(invoiceDate)}</p>
         </div>
       </div>
 
-      {/* Customer Info */}
-      <div className="mb-12 bg-gray-50/50 rounded-2xl p-8 border border-gray-100 text-start">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="h-1.5 w-6 bg-dz-green rounded-full"></div>
-          <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{getDocT('customerInfo.title')}</h2>
+      {/* === TWO-COLUMN: Business Info (FROM) | Customer Info (TO) === */}
+      <div className={cn("grid grid-cols-2 gap-6 mb-6", isDocRTL ? "text-right" : "text-left")}>
+        {/* Column 1: Issuer/Business Info */}
+        <div className="space-y-1.5 border-e border-gray-200 pe-4">
+          <p className="text-xs font-bold text-dz-green uppercase tracking-widest mb-3">
+            {getDocT('preview.issuer', 'المُصدر')}
+          </p>
+          {settings.businessName && (
+            <p className="text-base font-black text-dz-dark">{settings.businessName}</p>
+          )}
+          {settings.businessAddress && (
+            <p className="text-sm text-gray-600">{settings.businessAddress}</p>
+          )}
+          {settings.businessPhone && (
+            <p className="text-sm text-gray-600 num-ltr" dir="ltr">{settings.businessPhone}</p>
+          )}
+          <div className="flex flex-wrap gap-x-4 mt-2 text-xs font-mono text-gray-500">
+            {settings.businessNIF && <span dir="ltr">NIF: {settings.businessNIF}</span>}
+            {settings.businessRC && <span dir="ltr">RC: {settings.businessRC}</span>}
+          </div>
         </div>
-        <div className="space-y-2">
-          <p className="text-2xl font-bold text-dz-dark font-sans">{customerName || getDocT('invoiceHeader.unspecified')}</p>
-          <p className="whitespace-pre-line text-gray-500 leading-relaxed font-sans text-lg">{customerAddress || getDocT('invoiceHeader.unspecified')}</p>
+
+        {/* Column 2: Customer Info */}
+        <div className="space-y-1.5 ps-4">
+          <p className="text-xs font-bold text-dz-green uppercase tracking-widest mb-3">
+            {getDocT('customerInfo.title')}
+          </p>
+          <p className="text-base font-black text-dz-dark">{customerName || getDocT('invoiceHeader.unspecified')}</p>
+          <p className="text-sm text-gray-600 whitespace-pre-line">{customerAddress}</p>
         </div>
       </div>
 

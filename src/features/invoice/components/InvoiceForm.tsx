@@ -8,12 +8,14 @@ import InvoiceItem from './InvoiceItem';
 import InvoicePreview from './InvoicePreview';
 import { Button } from '@/shared/ui/button';
 import { useInvoice } from '../hooks/useInvoice';
+import { useProductHistory } from '../hooks/useProductHistory';
 import { useSettings } from '../../settings/hooks/useSettings';
 import { cn } from '@/lib/utils';
 import { InvoiceItem as InvoiceItemType } from '../types/invoice';
 
 const InvoiceForm: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { recentProducts, saveProduct } = useProductHistory();
   const {
     invoiceNumber,
     setInvoiceNumber,
@@ -33,14 +35,17 @@ const InvoiceForm: React.FC = () => {
     removeItem,
     duplicateInvoice,
     recallLastCustomer,
-    descriptionHistory
+    createNewInvoice,
+    isSaving
   } = useInvoice();
 
   const [activeTab, setActiveTab] = React.useState('edit');
-  const isRTL = invoiceLang === 'ar';
+
+  // UI direction follows APP language (from URL), NOT invoice document language
+  const isAppRTL = i18n.language === 'ar';
 
   return (
-    <div className="min-h-screen pt-4 pb-20" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen pt-4 pb-20" dir={isAppRTL ? 'rtl' : 'ltr'}>
       {/* Page Header */}
       <div className="max-w-5xl mx-auto mb-10 px-4 print:hidden">
         <div className="flex flex-col items-center justify-center text-center space-y-4 pb-8 border-b border-gray-100/50">
@@ -88,8 +93,13 @@ const InvoiceForm: React.FC = () => {
               status={status} setStatus={setStatus}
               duplicateInvoice={duplicateInvoice}
               recallLastCustomer={recallLastCustomer}
-              descriptionHistory={descriptionHistory}
-              onContinue={() => setActiveTab('preview')}
+              recentProducts={recentProducts.map(p => p.name)}
+              onContinue={() => {
+                items.forEach(item => saveProduct(item));
+                setActiveTab('preview');
+              }}
+              createNewInvoice={createNewInvoice}
+              isSaving={isSaving}
             />
           </TabsContent>
 
@@ -111,7 +121,7 @@ const InvoiceForm: React.FC = () => {
                 onClick={() => setActiveTab('edit')}
                 className="text-gray-400 hover:text-dz-dark font-bold gap-2 items-center"
               >
-                <span className={isRTL ? "rotate-180" : ""}>←</span> {t('common.backToEdit', 'Back to Editing')}
+                <span className={isAppRTL ? "rotate-180" : ""}>←</span> {t('common.backToEdit', 'Back to Editing')}
               </Button>
             </div>
           </TabsContent>
@@ -151,8 +161,10 @@ interface FormContentProps {
   setStatus: (s: 'draft' | 'sent' | 'paid') => void;
   duplicateInvoice: () => void;
   recallLastCustomer: () => void;
-  descriptionHistory: string[];
+  recentProducts: string[];
   onContinue: () => void;
+  createNewInvoice: () => void;
+  isSaving: boolean;
 }
 
 const FormContent: React.FC<FormContentProps> = ({
@@ -166,10 +178,13 @@ const FormContent: React.FC<FormContentProps> = ({
   duplicateInvoice,
   recallLastCustomer,
   descriptionHistory,
-  onContinue
+  onContinue,
+  createNewInvoice,
+  isSaving
 }) => {
-  const { t } = useTranslation();
-  const isRTL = invoiceLang === 'ar';
+  const { t, i18n } = useTranslation();
+  // UI direction (arrows) follows APP language
+  const isAppRTL = i18n.language === 'ar';
 
   return (
     <div className="space-y-8 pb-12 px-4">
@@ -184,6 +199,8 @@ const FormContent: React.FC<FormContentProps> = ({
           status={status}
           setStatus={setStatus}
           duplicateInvoice={duplicateInvoice}
+          createNewInvoice={createNewInvoice}
+          isSaving={isSaving}
         />
 
         <CustomerInfo
@@ -217,9 +234,9 @@ const FormContent: React.FC<FormContentProps> = ({
             {t('buttons.previewInvoice')}
             <span className={cn(
               "ms-2 opacity-30 transition-transform",
-              isRTL ? "group-hover:-translate-x-1" : "group-hover:translate-x-1"
+              isAppRTL ? "group-hover:-translate-x-1" : "group-hover:translate-x-1"
             )}>
-              {isRTL ? "←" : "→"}
+              {isAppRTL ? "←" : "→"}
             </span>
           </Button>
         </div>

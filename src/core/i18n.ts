@@ -15,7 +15,10 @@ const resources = {
       "common": {
         "autoSaved": "تم الحفظ تلقائياً",
         "backToEdit": "الرجوع للتعديل",
-        "confirmDelete": "هل أنت متأكد من حذف هذه الفاتورة نهائياً؟"
+        "confirmDelete": "هل أنت متأكد من حذف هذه الفاتورة نهائياً؟",
+        "newInvoice": "فاتورة جديدة",
+        "saving": "جاري الحفظ...",
+        "saved": "تم الحفظ"
       },
       "archive": {
         "description": "تتبع وادر فواتيرك الصادرة بكل سهولة من مكان واحد.",
@@ -59,7 +62,19 @@ const resources = {
         "status": "حالة الفاتورة",
         "statusDraft": "مسودة",
         "statusSent": "تم الإرسال",
-        "statusPaid": "تم الدفع"
+        "statusPaid": "تم الدفع",
+        "businessInfo": "معلومات المؤسسة",
+        "businessName": "اسم المؤسسة/التاجر",
+        "businessAddress": "العنوان",
+        "businessPhone": "رقم الهاتف",
+        "taxId": "(الرقم الجبائي)",
+        "commercialReg": "(السجل التجاري)",
+        "businessBank": "الحساب البنكي (اختياري)"
+      },
+      "preview": {
+        "issuer": "المُصدِر",
+        "thankYou": "شكراً لثقتكم بنا. نأمل التعامل معكم مجدداً",
+        "items": "بنود الفاتورة"
       },
       "invoiceHeader": {
         "title": "فاتورة",
@@ -90,10 +105,6 @@ const resources = {
         "save": "حفظ كـ مسودة",
         "download": "تحميل PDF"
       },
-      "preview": {
-        "thankYou": "شكراً لثقتكم بنا. نأمل التعامل معكم مجدداً",
-        "items": "بنود الفاتورة"
-      },
       "navigation": {
         "dashboard": "الرئيسية",
         "invoices": "الفواتير",
@@ -113,7 +124,10 @@ const resources = {
       "common": {
         "autoSaved": "Auto-saved",
         "backToEdit": "Back to Editing",
-        "confirmDelete": "Are you sure you want to delete this invoice permanently?"
+        "confirmDelete": "Are you sure you want to delete this invoice permanently?",
+        "newInvoice": "New Invoice",
+        "saving": "Saving...",
+        "saved": "Saved"
       },
       "archive": {
         "description": "Track and manage your issued invoices with ease from one place.",
@@ -157,7 +171,19 @@ const resources = {
         "status": "Invoice Status",
         "statusDraft": "Draft",
         "statusSent": "Sent",
-        "statusPaid": "Paid"
+        "statusPaid": "Paid",
+        "businessInfo": "Business Information",
+        "businessName": "Business/Merchant Name",
+        "businessAddress": "Address",
+        "businessPhone": "Phone Number",
+        "taxId": "(Tax ID)",
+        "commercialReg": "(Commercial Register)",
+        "businessBank": "Bank Account (optional)"
+      },
+      "preview": {
+        "issuer": "Issuer",
+        "thankYou": "Thank you for your business. We appreciate your trust.",
+        "items": "Invoice Items"
       },
       "invoiceHeader": {
         "title": "INVOICE",
@@ -188,10 +214,6 @@ const resources = {
         "save": "Save Draft",
         "download": "Download PDF"
       },
-      "preview": {
-        "thankYou": "Thank you for your business. We appreciate your trust.",
-        "items": "Invoice Items"
-      },
       "navigation": {
         "dashboard": "Dashboard",
         "invoices": "Invoices",
@@ -211,7 +233,10 @@ const resources = {
       "common": {
         "autoSaved": "Enregistré auto.",
         "backToEdit": "Retour à l'édition",
-        "confirmDelete": "Êtes-vous sûr de vouloir supprimer cette facture définitivement ?"
+        "confirmDelete": "Êtes-vous sûr de vouloir supprimer cette facture définitivement ?",
+        "newInvoice": "Nouvelle Facture",
+        "saving": "Enregistrement...",
+        "saved": "Enregistré"
       },
       "archive": {
         "description": "Suivez et gérez vos factures émises facilement depuis un seul endroit.",
@@ -255,7 +280,19 @@ const resources = {
         "status": "Statut de la facture",
         "statusDraft": "Brouillon",
         "statusSent": "Envoyée",
-        "statusPaid": "Payée"
+        "statusPaid": "Payée",
+        "businessInfo": "Informations Entreprise",
+        "businessName": "Nom de l'entreprise/commerçant",
+        "businessAddress": "Adresse",
+        "businessPhone": "Numéro de téléphone",
+        "taxId": "(NIF)",
+        "commercialReg": "(Registre de Commerce)",
+        "businessBank": "Compte bancaire (optionnel)"
+      },
+      "preview": {
+        "issuer": "Émetteur",
+        "thankYou": "Merci de votre confiance. Au plaisir de retravailler avec vous.",
+        "items": "Détails de la facture"
       },
       "invoiceHeader": {
         "title": "FACTURE",
@@ -285,10 +322,6 @@ const resources = {
         "print": "Imprimer la facture",
         "save": "Enregistrer",
         "download": "Télécharger PDF"
-      },
-      "preview": {
-        "thankYou": "Merci de votre confiance. Au plaisir de retravailler avec vous.",
-        "items": "Détails de la facture"
       },
       "navigation": {
         "dashboard": "Tableau de bord",

@@ -91,8 +91,8 @@ body {
 
 /* Print Styles */
 @page {
+  size: A4;
   margin: 0;
-  /* This removes browser headers and footers */
 }
 
 @media print {
@@ -102,6 +102,7 @@ body {
     background: white !important;
     margin: 0 !important;
     padding: 0 !important;
+    font-size: 12pt !important;
   }
 
   /* Hide everything by default using visibility */
@@ -122,7 +123,7 @@ body {
     left: 0 !important;
     top: 0 !important;
     width: 21cm !important;
-    /* A4 width */
+    min-height: 29.7cm !important;
     margin: 0 !important;
     padding: 1.5cm !important;
     background: white !important;
@@ -131,14 +132,72 @@ body {
     z-index: 9999 !important;
   }
 
-  /* Hide specific structural elements entirely to avoid empty space/extra pages */
+  /* === CRITICAL: Force images to display === */
+  .printable-invoice img {
+    visibility: visible !important;
+    display: block !important;
+    max-height: 80px !important;
+    width: auto !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Hide structural elements */
   aside,
   nav,
   [role="tablist"],
   button,
   header,
-  footer {
+  footer,
+  .print\:hidden {
     display: none !important;
+  }
+
+  /* === Normalize Font Sizes for Print === */
+  .printable-invoice {
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+  }
+
+  .printable-invoice h1 {
+    font-size: 24pt !important;
+  }
+
+  .printable-invoice h2 {
+    font-size: 10pt !important;
+  }
+
+  .printable-invoice p {
+    font-size: 10pt !important;
+  }
+
+  .printable-invoice table {
+    font-size: 10pt !important;
+    width: 100% !important;
+  }
+
+  .printable-invoice th {
+    font-size: 8pt !important;
+    padding: 8px !important;
+  }
+
+  .printable-invoice td {
+    font-size: 10pt !important;
+    padding: 10px !important;
+  }
+
+  /* Small labels */
+  .printable-invoice .text-\[9px\],
+  .printable-invoice .text-\[10px\],
+  .printable-invoice .text-xs {
+    font-size: 7pt !important;
+  }
+
+  /* Large totals */
+  .printable-invoice .text-3xl,
+  .printable-invoice .text-4xl,
+  .printable-invoice .text-5xl {
+    font-size: 16pt !important;
   }
 
   /* Fix for Arabic letters */
@@ -153,19 +212,24 @@ body {
   .force-ltr {
     direction: ltr !important;
     unicode-bidi: isolate !important;
-    text-align: left !important;
-    display: inline-block;
-    /* Helps with isolation */
   }
 
-  /* Keep numbers LTR and ensure they don't flip */
   .printable-invoice .num-ltr {
     font-variant-numeric: tabular-nums;
     white-space: nowrap !important;
   }
 
-  /* Ensure slashes in dates aren't isolated weirdly */
-  .printable-invoice .text-lg.font-black {
-    unicode-bidi: bidi-override;
+  /* Colors for print */
+  .printable-invoice .text-dz-green {
+    color: #10b981 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .printable-invoice .bg-dz-green\/5,
+  .printable-invoice .bg-gray-50 {
+    background-color: #f9fafb !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 }

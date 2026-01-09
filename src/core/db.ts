@@ -5,7 +5,7 @@
  */
 
 const DB_NAME = 'dz_invoice_maker_db';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 export class DzDB {
     private db: IDBDatabase | null = null;
@@ -22,17 +22,22 @@ export class DzDB {
             request.onupgradeneeded = (event: any) => {
                 const db = event.target.result;
                 console.log("DzDB: Upgrading Database schema...");
-                // Settings store
+
+                // v1 Stores
                 if (!db.objectStoreNames.contains('settings')) {
                     db.createObjectStore('settings');
                 }
-                // Invoices store
                 if (!db.objectStoreNames.contains('invoices')) {
                     db.createObjectStore('invoices', { keyPath: 'sessionId' });
                 }
-                // Resources/History (Descriptions, Customers)
                 if (!db.objectStoreNames.contains('resources')) {
                     db.createObjectStore('resources');
+                }
+
+                // v2 Stores: Products Cache
+                if (!db.objectStoreNames.contains('products')) {
+                    const productStore = db.createObjectStore('products', { keyPath: 'name' });
+                    productStore.createIndex('updatedAt', 'updatedAt', { unique: false });
                 }
             };
 

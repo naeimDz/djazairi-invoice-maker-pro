@@ -2,12 +2,8 @@
 import React, { useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-    Settings2,
     Upload,
     X,
-    AlignLeft,
-    AlignCenter,
-    AlignRight,
     Check,
     Globe,
     CreditCard,
@@ -118,31 +114,93 @@ const SettingsView: React.FC = () => {
                                 />
                             </div>
                         </div>
+                    </div>
 
-                        <div className="space-y-3">
-                            <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 block px-1">
-                                {t('settings.logoAlignment')}
-                            </Label>
-                            <div className="flex gap-2">
-                                {[
-                                    { value: 'left', icon: <AlignLeft className="h-5 w-5" /> },
-                                    { value: 'center', icon: <AlignCenter className="h-5 w-5" /> },
-                                    { value: 'right', icon: <AlignRight className="h-5 w-5" /> },
-                                ].map((align) => (
-                                    <Button
-                                        key={align.value}
-                                        variant="ghost"
-                                        className={cn(
-                                            "flex-1 h-14 rounded-2xl transition-all border border-transparent",
-                                            settings.logoAlignment === align.value
-                                                ? "bg-dz-green text-white shadow-lg shadow-dz-green/20"
-                                                : "bg-gray-50 text-gray-400 hover:bg-gray-100"
-                                        )}
-                                        onClick={() => updateField('logoAlignment', align.value as any)}
-                                    >
-                                        {align.icon}
-                                    </Button>
-                                ))}
+                    {/* Business Info Card */}
+                    <div className="bg-white rounded-3xl p-8 shadow-xl shadow-dz-dark/5 border border-gray-100 space-y-6">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2 bg-blue-50 rounded-xl">
+                                <CreditCard className="h-5 w-5 text-blue-500" />
+                            </div>
+                            <h3 className="font-black text-lg text-dz-dark">{t('settings.businessInfo', 'معلومات المؤسسة')}</h3>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block">
+                                    {t('settings.businessName', 'اسم المؤسسة')}
+                                </Label>
+                                <Input
+                                    value={settings.businessName}
+                                    onChange={(e) => updateField('businessName', e.target.value)}
+                                    className="h-11 rounded-xl border-gray-100 bg-gray-50/30 focus:bg-white font-bold"
+                                    placeholder="مؤسسة السلام للتجارة"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block">
+                                    {t('settings.businessAddress', 'العنوان')}
+                                </Label>
+                                <Input
+                                    value={settings.businessAddress}
+                                    onChange={(e) => updateField('businessAddress', e.target.value)}
+                                    className="h-11 rounded-xl border-gray-100 bg-gray-50/30 focus:bg-white font-medium"
+                                    placeholder="شارع الاستقلال، الجزائر العاصمة"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block">
+                                    {t('settings.businessPhone', 'الهاتف')}
+                                </Label>
+                                <Input
+                                    value={settings.businessPhone}
+                                    onChange={(e) => updateField('businessPhone', e.target.value)}
+                                    className="h-11 rounded-xl border-gray-100 bg-gray-50/30 focus:bg-white font-medium num-ltr"
+                                    placeholder="0555 00 00 00"
+                                    dir="ltr"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-2">
+                                    <Label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block">
+                                        NIF {t('settings.taxId', '(الرقم الجبائي)')}
+                                    </Label>
+                                    <Input
+                                        value={settings.businessNIF}
+                                        onChange={(e) => updateField('businessNIF', e.target.value)}
+                                        className="h-11 rounded-xl border-gray-100 bg-gray-50/30 focus:bg-white font-mono text-sm"
+                                        placeholder="000000000000000"
+                                        dir="ltr"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block">
+                                        RC {t('settings.commercialReg', '(السجل التجاري)')}
+                                    </Label>
+                                    <Input
+                                        value={settings.businessRC}
+                                        onChange={(e) => updateField('businessRC', e.target.value)}
+                                        className="h-11 rounded-xl border-gray-100 bg-gray-50/30 focus:bg-white font-mono text-sm"
+                                        placeholder="00/00-0000000B00"
+                                        dir="ltr"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block">
+                                    {t('settings.businessBank', 'الحساب البنكي (اختياري)')}
+                                </Label>
+                                <Input
+                                    value={settings.businessBank}
+                                    onChange={(e) => updateField('businessBank', e.target.value)}
+                                    className="h-11 rounded-xl border-gray-100 bg-gray-50/30 focus:bg-white font-mono text-sm"
+                                    placeholder="CPA / 00000 00000 00000000000 00"
+                                    dir="ltr"
+                                />
                             </div>
                         </div>
                     </div>
