@@ -16,7 +16,7 @@ import { InvoiceItem as InvoiceItemType } from '../types/invoice';
 
 const InvoiceForm: React.FC = () => {
   const { t, i18n } = useTranslation();
-  const { recentProducts } = useProductHistory();
+  const { recentProducts, refreshHistory: fetchRecentProducts } = useProductHistory();
   const {
     invoiceNumber,
     setInvoiceNumber,
@@ -95,6 +95,7 @@ const InvoiceForm: React.FC = () => {
               duplicateInvoice={duplicateInvoice}
               recallLastCustomer={recallLastCustomer}
               recentProducts={recentProducts}
+              onProductsUpdated={fetchRecentProducts}
               onContinue={() => {
                 setActiveTab('preview');
               }}
@@ -162,6 +163,7 @@ interface FormContentProps {
   duplicateInvoice: () => void;
   recallLastCustomer: () => void;
   recentProducts: ProductHistoryItem[];
+  onProductsUpdated: () => void;
   onContinue: () => void;
   createNewInvoice: () => void;
   isSaving: boolean;
@@ -178,6 +180,7 @@ const FormContent: React.FC<FormContentProps> = ({
   duplicateInvoice,
   recallLastCustomer,
   recentProducts,
+  onProductsUpdated,
   onContinue,
   createNewInvoice,
   isSaving
@@ -193,6 +196,8 @@ const FormContent: React.FC<FormContentProps> = ({
         await addProductService({ name: item.description, price: item.price });
       }
     }
+    // Refresh the product list so suggestions are up to date
+    onProductsUpdated();
   };
 
   const handleContinueAndSave = async () => {

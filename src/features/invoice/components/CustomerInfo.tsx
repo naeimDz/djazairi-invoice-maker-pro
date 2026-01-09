@@ -25,7 +25,7 @@ const CustomerInfo: React.FC<CustomerInfoProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
-  const { recentClients, searchClients } = useClientHistory();
+  const { recentClients, searchClients, refreshHistory } = useClientHistory();
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<typeof recentClients>([]);
 
@@ -36,11 +36,13 @@ const CustomerInfo: React.FC<CustomerInfoProps> = ({
         addClient({
           name: customerName,
           address: customerAddress || undefined
+        }).then(() => {
+          refreshHistory();
         });
       }
     }, 1000); // Debounce by 1 second
     return () => clearTimeout(timer);
-  }, [customerName, customerAddress]);
+  }, [customerName, customerAddress, refreshHistory]);
 
   // Update suggestions based on input
   useEffect(() => {
