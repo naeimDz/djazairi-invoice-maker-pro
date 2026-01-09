@@ -1,3 +1,4 @@
+
 import { openDB, IDBPDatabase } from 'idb';
 
 const DB_NAME = 'invoiceMakerProDB';
@@ -33,9 +34,29 @@ async function initDB() {
   });
 }
 
-export async function addProductService(item: ProductService) {
+// Generic Upsert Helper
+async function upsertItem(storeName: string, item: any) {
   if (!db) await initDB();
-  return db.add('products', item);
+
+  const tx = db.transaction(storeName, 'readwrite');
+  const store = tx.objectStore(storeName);
+
+  // Deduplicate by name (case-insensitive)
+  const allItems = await store.getAll();
+  const existingItem = allItems.find(
+    (i: any) => i.name.trim().toLowerCase() === item.name.trim().toLowerCase()
+  );
+
+  if (existingItem && existingItem.id) {
+    await store.delete(existingItem.id);
+  }
+
+  await store.add(item);
+  await tx.done;
+}
+
+export async function addProductService(item: ProductService) {
+  return upsertItem('products', item);
 }
 
 export async function getRecentProductServices(limit = 10): Promise<ProductService[]> {
@@ -51,8 +72,7 @@ export async function getRecentProductServices(limit = 10): Promise<ProductServi
 }
 
 export async function addClient(client: Client) {
-  if (!db) await initDB();
-  return db.add('clients', client);
+  return upsertItem('clients', client);
 }
 
 export async function getRecentClients(limit = 10): Promise<Client[]> {

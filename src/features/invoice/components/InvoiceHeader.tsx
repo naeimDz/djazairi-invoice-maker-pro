@@ -5,10 +5,22 @@ import { Calendar, Globe, Copy, CheckCircle2, Clock, Send } from 'lucide-react';
 import { Input } from '@/shared/ui/input';
 import { cn } from '@/lib/utils';
 import { Button } from '@/shared/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/shared/ui/alert-dialog";
+import { useState } from 'react';
 
 interface InvoiceHeaderProps {
   invoiceNumber: string;
   setInvoiceNumber: (value: string) => void;
+  customerName: string;
   invoiceDate: string;
   setInvoiceDate: (value: string) => void;
   invoiceLang: string;
@@ -23,6 +35,7 @@ interface InvoiceHeaderProps {
 const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   invoiceNumber,
   setInvoiceNumber,
+  customerName,
   invoiceDate,
   setInvoiceDate,
   invoiceLang,
@@ -34,6 +47,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   isSaving
 }) => {
   const { t, i18n } = useTranslation();
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   // UI direction follows app language, NOT the invoice document language
   const isUIRTL = i18n.language === 'ar';
@@ -163,7 +177,19 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={createNewInvoice}
+              onClick={() => {
+                // If the invoice is mostly empty, just reset without asking
+                const isEmpty = !invoiceNumber && !customerName && (!invoiceDate || invoiceDate === new Date().toISOString().split('T')[0]);
+
+                if (isEmpty) {
+                  createNewInvoice();
+                  return;
+                }
+
+                if (window.confirm(t('common.confirmNewInvoice', 'Are you sure you want to start a new invoice? Current changes are auto-saved in history.'))) {
+                  createNewInvoice();
+                }
+              }}
               className="h-10 px-4 text-xs font-bold text-dz-green hover:bg-dz-green hover:text-white rounded-xl transition-all"
             >
               + {t('common.newInvoice', 'جديد')}

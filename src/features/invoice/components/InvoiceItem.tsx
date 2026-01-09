@@ -5,16 +5,15 @@ import { Trash2 } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { InvoiceItem as InvoiceItemType } from '../types/invoice';
 import { Input } from '@/shared/ui/input';
-import { addProductService } from '@/core/localDbService';
+import { ProductHistoryItem } from '../hooks/useProductHistory';
 
 interface InvoiceItemProps {
   items: InvoiceItemType[];
   onAdd: () => void;
   onUpdate: (id: string, field: keyof InvoiceItemType, value: string | number) => void;
   onRemove: (id: string) => void;
-  descriptionHistory?: string[];
+  productSuggestions?: ProductHistoryItem[];
   invoiceLang?: string;
-  onSaveProducts?: (items: InvoiceItemType[]) => void;
 }
 
 const InvoiceItem: React.FC<InvoiceItemProps> = ({
@@ -22,28 +21,27 @@ const InvoiceItem: React.FC<InvoiceItemProps> = ({
   onAdd,
   onUpdate,
   onRemove,
-  descriptionHistory = [],
-  invoiceLang = 'ar',
-  onSaveProducts
+  productSuggestions = [],
+  invoiceLang = 'ar'
 }) => {
   const { t } = useTranslation();
   const isRTL = invoiceLang === 'ar';
-  const [selectedItemId, setSelectedItemId] = React.useState<string | null>(null);
 
   const handleDescriptionChange = (id: string, value: string) => {
     onUpdate(id, 'description', value);
+
+    // Auto-fill price if exact match found in history
+    const matchedProduct = productSuggestions.find(
+      p => p.name.trim().toLowerCase() === value.trim().toLowerCase()
+    );
+
+    if (matchedProduct) {
+      onUpdate(id, 'price', matchedProduct.price);
+    }
   };
 
   const handlePriceChange = (id: string, value: number) => {
     onUpdate(id, 'price', value);
-  };
-
-  const handleItemBlur = (id: string) => {
-    // Save product/service on blur
-    const item = items.find(i => i.id === id);
-    if (item && item.description && item.price > 0 && onSaveProducts) {
-      onSaveProducts([item]);
-    }
   };
 
   return (
@@ -67,15 +65,14 @@ const InvoiceItem: React.FC<InvoiceItemProps> = ({
                     <div className="relative">
                       <Input
                         value={item.description}
-                        onChange={(e) => onUpdate(item.id, 'description', e.target.value)}
-                        onBlur={() => handleItemBlur(item.id)}
+                        onChange={(e) => handleDescriptionChange(item.id, e.target.value)}
                         className="resize-none focus-visible:ring-dz-green border-none bg-transparent hover:bg-white focus:bg-white transition-all p-2 -ms-2 text-start font-sans h-auto min-h-[40px] w-full"
                         placeholder={t('invoiceItem.description')}
                         list={`descriptions-${item.id}`}
                       />
                       <datalist id={`descriptions-${item.id}`}>
-                        {descriptionHistory.map((desc, idx) => (
-                          <option key={idx} value={desc} />
+                        {productSuggestions.map((product, idx) => (
+                          <option key={idx} value={product.name} />
                         ))}
                       </datalist>
                     </div>
@@ -95,7 +92,6 @@ const InvoiceItem: React.FC<InvoiceItemProps> = ({
                       min="0"
                       value={item.price}
                       onChange={(e) => handlePriceChange(item.id, Number(e.target.value))}
-                      onBlur={() => handleItemBlur(item.id)}
                       className="text-center focus-visible:ring-dz-green num-ltr h-10 border-gray-100 bg-gray-50/30 focus:bg-white"
                     />
                   </td>

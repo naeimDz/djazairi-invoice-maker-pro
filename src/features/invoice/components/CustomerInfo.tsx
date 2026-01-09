@@ -33,23 +33,21 @@ const CustomerInfo: React.FC<CustomerInfoProps> = ({
   useEffect(() => {
     const timer = setTimeout(() => {
       if (customerName && customerName.trim()) {
-        addClient({ 
-          name: customerName, 
-          address: customerAddress || undefined 
+        addClient({
+          name: customerName,
+          address: customerAddress || undefined
         });
       }
     }, 1000); // Debounce by 1 second
     return () => clearTimeout(timer);
-  }, [customerName]);
+  }, [customerName, customerAddress]);
 
   // Update suggestions based on input
   useEffect(() => {
     if (customerName) {
       setSuggestions(searchClients(customerName));
-      setShowSuggestions(true);
     } else {
       setSuggestions(recentClients.slice(0, 5));
-      setShowSuggestions(false);
     }
   }, [customerName, recentClients, searchClients]);
 
@@ -97,7 +95,7 @@ const CustomerInfo: React.FC<CustomerInfoProps> = ({
               className="h-14 bg-gray-50/30 border-gray-100 focus:bg-white focus:border-dz-green focus:ring-dz-green/20 transition-all rounded-xl text-start font-bold"
               list={showSuggestions ? undefined : 'clientSuggestions'}
             />
-            
+
             {/* Autocomplete Suggestions */}
             {showSuggestions && suggestions.length > 0 && (
               <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-100 rounded-lg shadow-lg z-50 overflow-hidden">

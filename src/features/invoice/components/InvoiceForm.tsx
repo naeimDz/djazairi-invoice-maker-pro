@@ -8,7 +8,7 @@ import InvoiceItem from './InvoiceItem';
 import InvoicePreview from './InvoicePreview';
 import { Button } from '@/shared/ui/button';
 import { useInvoice } from '../hooks/useInvoice';
-import { useProductHistory } from '../hooks/useProductHistory';
+import { useProductHistory, ProductHistoryItem } from '../hooks/useProductHistory';
 import { useSettings } from '../../settings/hooks/useSettings';
 import { addProductService } from '@/core/localDbService';
 import { cn } from '@/lib/utils';
@@ -16,7 +16,7 @@ import { InvoiceItem as InvoiceItemType } from '../types/invoice';
 
 const InvoiceForm: React.FC = () => {
   const { t, i18n } = useTranslation();
-  const { recentProducts, saveProduct } = useProductHistory();
+  const { recentProducts } = useProductHistory();
   const {
     invoiceNumber,
     setInvoiceNumber,
@@ -94,9 +94,8 @@ const InvoiceForm: React.FC = () => {
               status={status} setStatus={setStatus}
               duplicateInvoice={duplicateInvoice}
               recallLastCustomer={recallLastCustomer}
-              recentProducts={recentProducts.map(p => p.name)}
+              recentProducts={recentProducts}
               onContinue={() => {
-                items.forEach(item => saveProduct(item));
                 setActiveTab('preview');
               }}
               createNewInvoice={createNewInvoice}
@@ -162,7 +161,7 @@ interface FormContentProps {
   setStatus: (s: 'draft' | 'sent' | 'paid') => void;
   duplicateInvoice: () => void;
   recallLastCustomer: () => void;
-  recentProducts: string[];
+  recentProducts: ProductHistoryItem[];
   onContinue: () => void;
   createNewInvoice: () => void;
   isSaving: boolean;
@@ -178,7 +177,7 @@ const FormContent: React.FC<FormContentProps> = ({
   status, setStatus,
   duplicateInvoice,
   recallLastCustomer,
-  descriptionHistory,
+  recentProducts,
   onContinue,
   createNewInvoice,
   isSaving
@@ -208,6 +207,7 @@ const FormContent: React.FC<FormContentProps> = ({
         <InvoiceHeader
           invoiceNumber={invoiceNumber}
           setInvoiceNumber={setInvoiceNumber}
+          customerName={customerName}
           invoiceDate={invoiceDate}
           setInvoiceDate={setInvoiceDate}
           invoiceLang={invoiceLang}
@@ -241,9 +241,8 @@ const FormContent: React.FC<FormContentProps> = ({
             onAdd={addItem}
             onUpdate={updateItem}
             onRemove={removeItem}
-            descriptionHistory={descriptionHistory}
+            productSuggestions={recentProducts}
             invoiceLang={invoiceLang}
-            onSaveProducts={handleSaveProducts}
           />
         </div>
 
@@ -264,6 +263,6 @@ const FormContent: React.FC<FormContentProps> = ({
       </div>
     </div>
   );
-}
+};
 
 export default InvoiceForm;

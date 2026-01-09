@@ -25,11 +25,6 @@ export const useProductHistory = () => {
         fetchRecentProducts();
     }, [fetchRecentProducts]);
 
-    const saveProduct = async (item: InvoiceItem) => {
-        if (!item.description || !item.description.trim()) return;
-        // Products are now auto-saved in InvoiceItem when price is set
-    };
-
     /**
      * Search local history
      */
@@ -43,7 +38,6 @@ export const useProductHistory = () => {
 
     return {
         recentProducts,
-        saveProduct,
         searchProducts,
         refreshHistory: fetchRecentProducts
     };

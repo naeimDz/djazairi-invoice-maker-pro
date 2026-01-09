@@ -8,7 +8,12 @@ import {
     Globe,
     CreditCard,
     Palette,
-    Brain
+    Brain,
+    Building2,
+    Calculator,
+    FileText,
+    Settings as SettingsIcon,
+    Leaf
 } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { Label } from '@/shared/ui/label';
@@ -33,21 +38,17 @@ const SettingsView: React.FC = () => {
     const isRTL = i18n.language === 'ar';
 
     useEffect(() => {
-        console.log("SettingsView RENDER: current VAT is", settings.defaultVatRate);
         const loadRecentItems = async () => {
             const recentProducts = await getRecentProductServices();
             const recentClients = await getRecentClients();
-            console.log("Loaded products:", recentProducts);
-            console.log("Loaded clients:", recentClients);
             updateSettings({ recentProductServices: recentProducts as any, recentClients: recentClients as any });
         };
         loadRecentItems();
-    }, []); // Empty dependency to run once on mount
+    }, []);
 
-    // Reload when window regains focus (user switches back to Settings)
+    // Reload when window regains focus
     useEffect(() => {
         const handleFocus = async () => {
-            console.log("Window focus: reloading products/clients");
             const recentProducts = await getRecentProductServices();
             const recentClients = await getRecentClients();
             updateSettings({ recentProductServices: recentProducts as any, recentClients: recentClients as any });
@@ -73,293 +74,251 @@ const SettingsView: React.FC = () => {
     };
 
     const updateField = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
-        console.log(`SettingsView: Setting ${key} to`, value);
         updateSettings({ [key]: value });
     };
 
     if (isLoading) {
-        return <div className="p-20 text-center font-black animate-pulse text-dz-green italic">LOADING MERCHANT PREFERENCES...</div>;
+        return <div className="min-h-screen flex items-center justify-center text-dz-green font-bold animate-pulse">Loading...</div>;
     }
 
     return (
-        <div className="max-w-4xl mx-auto space-y-10 pb-20 px-4" dir={isRTL ? 'rtl' : 'ltr'}>
-            <div className="flex flex-col gap-2 text-start">
-                <h1 className="text-4xl md:text-5xl font-black text-dz-dark tracking-tighter animate-in fade-in slide-in-from-s-4 duration-700">
-                    {t('navigation.settings')} <span className="text-dz-green">.</span>
+        <div className="max-w-6xl mx-auto pb-20 px-4 pt-6" dir={isRTL ? 'rtl' : 'ltr'}>
+
+            {/* Page Header */}
+            <div className="flex flex-col gap-3 mb-12">
+                <div className="flex items-center gap-3 text-dz-green/60 font-bold uppercase tracking-widest text-[10px]">
+                    <SettingsIcon className="h-4 w-4" />
+                    <span>{t('navigation.settings', 'Settings')}</span>
+                </div>
+                <h1 className="text-4xl md:text-5xl font-black text-dz-dark tracking-tighter">
+                    {t('settings.title', 'Control Center')} <span className="text-dz-green">.</span>
                 </h1>
-                <p className="text-gray-400 font-medium animate-in fade-in slide-in-from-s-4 duration-1000延迟-200">{t('settings.description')}</p>
+                <p className="text-gray-400 font-medium max-w-xl text-lg leading-relaxed">
+                    {t('settings.description')}
+                </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* Branding/Identity (Logo Column) */}
-                <div className="md:col-span-1 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                    <div className="bg-white rounded-3xl p-8 shadow-xl shadow-dz-dark/5 border border-gray-100 space-y-6">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-dz-green/10 rounded-xl">
-                                <Palette className="h-5 w-5 text-dz-green" />
-                            </div>
-                            <h3 className="font-black text-lg text-dz-dark">{t('settings.branding')}</h3>
-                        </div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-                        <div className="space-y-4">
-                            <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 block px-1">
-                                {t('settings.branding.logo')}
-                            </Label>
-                            <div className="relative group">
-                                {settings.logo ? (
-                                    <div className="relative bg-gray-50 rounded-2xl p-6 border-2 border-dashed border-gray-100 flex items-center justify-center min-h-[160px]">
-                                        <img src={settings.logo} alt="Logo" className="max-h-24 w-auto object-contain" />
-                                        <button
-                                            onClick={removeLogo}
-                                            className="absolute -top-3 -end-3 bg-red-500 text-white rounded-full p-2 shadow-xl hover:scale-110 transition-transform z-10"
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </button>
-                                    </div>
-                                ) : (
+                {/* === LEFT COLUMN: IDENTITY (Span 4) === */}
+                <div className="lg:col-span-4 space-y-8">
+
+                    {/* Brand Identity Card */}
+                    <div className="bg-white rounded-[2rem] p-1 shadow-xl shadow-dz-dark/5 border border-gray-100/60 overflow-hidden group hover:shadow-2xl hover:shadow-dz-green/5 transition-all duration-500">
+                        <div className="p-7 space-y-8">
+                            <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 rounded-2xl bg-dz-green/10 flex items-center justify-center text-dz-green shrink-0">
+                                    <Palette className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <h3 className="font-extrabold text-lg text-dz-dark leading-tight">{t('settings.branding')}</h3>
+                                    <p className="text-xs font-bold text-gray-300 uppercase tracking-wider">{t('settings.brandingIdentity', 'Visual Identity')}</p>
+                                </div>
+                            </div>
+
+                            {/* Circular Logo Upload */}
+                            <div className="flex justify-center py-4">
+                                <div className="relative group/logo">
                                     <div
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="cursor-pointer flex flex-col items-center justify-center gap-4 p-8 border-2 border-dashed border-gray-100 rounded-3xl bg-gray-50/50 hover:bg-dz-green/5 hover:border-dz-green/20 transition-all min-h-[160px] group"
+                                        onClick={() => !settings.logo && fileInputRef.current?.click()}
+                                        className={cn(
+                                            "w-48 h-48 rounded-full border-4 flex items-center justify-center transition-all duration-300 cursor-pointer overflow-hidden relative",
+                                            settings.logo
+                                                ? "border-white shadow-2xl shadow-dz-dark/10 bg-white"
+                                                : "border-dashed border-gray-200 bg-gray-50/50 hover:border-dz-green/30 hover:bg-dz-green/5"
+                                        )}
                                     >
-                                        <div className="h-14 w-14 rounded-2xl bg-white border border-gray-100 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                                            <Upload className="h-6 w-6 text-gray-400 group-hover:text-dz-green" />
-                                        </div>
-                                        <span className="text-xs font-black text-gray-400 uppercase tracking-widest">{t('settings.uploadLogo')}</span>
+                                        {settings.logo ? (
+                                            <img src={settings.logo} alt="Logo" className="w-full h-full object-contain p-6" />
+                                        ) : (
+                                            <div className="flex flex-col items-center gap-2 text-gray-300 group-hover/logo:text-dz-green transition-colors">
+                                                <Upload className="h-8 w-8" />
+                                                <span className="text-[10px] font-black uppercase tracking-widest">{t('settings.uploadLogo')}</span>
+                                            </div>
+                                        )}
+
+                                        {/* Actions Overlay */}
+                                        {settings.logo && (
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/logo:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-sm">
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                                                    className="h-10 w-10 bg-white rounded-full flex items-center justify-center text-dz-dark hover:scale-110 transition-transform shadow-lg"
+                                                >
+                                                    <Upload className="h-4 w-4" />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); removeLogo(); }}
+                                                    className="h-10 w-10 bg-red-500 text-white rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    onChange={handleLogoUpload}
-                                    accept="image/*"
-                                    className="hidden"
-                                />
+                                    <input type="file" ref={fileInputRef} onChange={handleLogoUpload} accept="image/*" className="hidden" />
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Business Info Card */}
-                    <div className="bg-white rounded-3xl p-8 shadow-xl shadow-dz-dark/5 border border-gray-100 space-y-6">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-blue-50 rounded-xl">
-                                <CreditCard className="h-5 w-5 text-blue-500" />
+                    <div className="bg-white rounded-[2rem] p-8 shadow-xl shadow-dz-dark/5 border border-gray-100/60 space-y-6">
+                        <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-500 shrink-0">
+                                <Building2 className="h-5 w-5" />
                             </div>
-                            <h3 className="font-black text-lg text-dz-dark">{t('settings.businessInfo', 'معلومات المؤسسة')}</h3>
+                            <div>
+                                <h3 className="font-extrabold text-lg text-dz-dark leading-tight">{t('settings.businessInfo', 'Company Profile')}</h3>
+                                <p className="text-xs font-bold text-gray-300 uppercase tracking-wider">{t('settings.details', 'Details')}</p>
+                            </div>
                         </div>
 
                         <div className="space-y-4">
-                            <div className="space-y-2">
-                                <Label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block">
-                                    {t('settings.businessName', 'اسم المؤسسة')}
-                                </Label>
+                            <div className="space-y-1.5">
+                                <Label className="text-[10px] font-black text-gray-400 uppercase tracking-wider ps-1">{t('settings.businessName')}</Label>
                                 <Input
                                     value={settings.businessName}
                                     onChange={(e) => updateField('businessName', e.target.value)}
-                                    className="h-11 rounded-xl border-gray-100 bg-gray-50/30 focus:bg-white font-bold"
-                                    placeholder="مؤسسة السلام للتجارة"
+                                    className="h-12 bg-gray-50/50 border-gray-100 focus:bg-white focus:ring-2 focus:ring-blue-500/10 rounded-xl font-bold"
+                                    placeholder={t('settings.businessNamePlaceholder', 'Business Name')}
                                 />
                             </div>
-
-                            <div className="space-y-2">
-                                <Label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block">
-                                    {t('settings.businessAddress', 'العنوان')}
-                                </Label>
-                                <Input
+                            <div className="space-y-1.5">
+                                <Label className="text-[10px] font-black text-gray-400 uppercase tracking-wider ps-1">{t('settings.businessAddress')}</Label>
+                                <Textarea
                                     value={settings.businessAddress}
                                     onChange={(e) => updateField('businessAddress', e.target.value)}
-                                    className="h-11 rounded-xl border-gray-100 bg-gray-50/30 focus:bg-white font-medium"
-                                    placeholder="شارع الاستقلال، الجزائر العاصمة"
+                                    className="resize-none h-24 bg-gray-50/50 border-gray-100 focus:bg-white focus:ring-2 focus:ring-blue-500/10 rounded-xl font-medium leading-relaxed"
+                                    placeholder={t('settings.businessAddressPlaceholder', 'Full Address')}
                                 />
                             </div>
-
-                            <div className="space-y-2">
-                                <Label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block">
-                                    {t('settings.businessPhone', 'الهاتف')}
-                                </Label>
+                            <div className="space-y-1.5">
+                                <Label className="text-[10px] font-black text-gray-400 uppercase tracking-wider ps-1">{t('settings.businessPhone')}</Label>
                                 <Input
                                     value={settings.businessPhone}
                                     onChange={(e) => updateField('businessPhone', e.target.value)}
-                                    className="h-11 rounded-xl border-gray-100 bg-gray-50/30 focus:bg-white font-medium num-ltr"
-                                    placeholder="0555 00 00 00"
+                                    className="h-12 bg-gray-50/50 border-gray-100 focus:bg-white focus:ring-2 focus:ring-blue-500/10 rounded-xl font-bold num-ltr"
+                                    placeholder="+213 555 00 00 00"
                                     dir="ltr"
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-2">
-                                    <Label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block">
-                                        NIF {t('settings.taxId', '(الرقم الجبائي)')}
-                                    </Label>
+                            <div className="pt-4 border-t border-gray-50 grid grid-cols-2 gap-3">
+                                <div className="space-y-1.5">
+                                    <Label className="text-[9px] font-black text-gray-400 uppercase tracking-wider ps-1">NIF</Label>
                                     <Input
                                         value={settings.businessNIF}
                                         onChange={(e) => updateField('businessNIF', e.target.value)}
-                                        className="h-11 rounded-xl border-gray-100 bg-gray-50/30 focus:bg-white font-mono text-sm"
-                                        placeholder="000000000000000"
+                                        className="h-10 bg-white border-dashed border-gray-200 focus:border-blue-500 focus:ring-0 rounded-lg font-mono text-xs"
+                                        placeholder="000...000"
                                         dir="ltr"
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <Label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block">
-                                        RC {t('settings.commercialReg', '(السجل التجاري)')}
-                                    </Label>
+                                <div className="space-y-1.5">
+                                    <Label className="text-[9px] font-black text-gray-400 uppercase tracking-wider ps-1">RC</Label>
                                     <Input
                                         value={settings.businessRC}
                                         onChange={(e) => updateField('businessRC', e.target.value)}
-                                        className="h-11 rounded-xl border-gray-100 bg-gray-50/30 focus:bg-white font-mono text-sm"
-                                        placeholder="00/00-0000000B00"
+                                        className="h-10 bg-white border-dashed border-gray-200 focus:border-blue-500 focus:ring-0 rounded-lg font-mono text-xs"
+                                        placeholder="00/...-..."
                                         dir="ltr"
                                     />
                                 </div>
                             </div>
-
-                            <div className="space-y-2">
-                                <Label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block">
-                                    {t('settings.businessBank', 'الحساب البنكي (اختياري)')}
-                                </Label>
+                            <div className="space-y-1.5 pt-2">
+                                <Label className="text-[9px] font-black text-gray-400 uppercase tracking-wider ps-1">{t('settings.businessBank')}</Label>
                                 <Input
                                     value={settings.businessBank}
                                     onChange={(e) => updateField('businessBank', e.target.value)}
-                                    className="h-11 rounded-xl border-gray-100 bg-gray-50/30 focus:bg-white font-mono text-sm"
-                                    placeholder="CPA / 00000 00000 00000000000 00"
+                                    className="h-10 bg-white border-dashed border-gray-200 focus:border-blue-500 focus:ring-0 rounded-lg font-mono text-xs"
+                                    placeholder="RIP / RIB"
                                     dir="ltr"
                                 />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Product/Service Management Card */}
-                    <div className="bg-white rounded-3xl p-8 shadow-xl shadow-dz-dark/5 border border-gray-100 space-y-6">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-purple-50 rounded-xl">
-                                <Brain className="h-5 w-5 text-purple-500" />
-                            </div>
-                            <h3 className="font-black text-lg text-dz-dark">{t('settings.productServiceManagement', 'إدارة المنتجات والخدمات')}</h3>
-                        </div>
-                        
-                        <p className="text-gray-500 text-sm">
-                            {t('settings.suggestedProducts', 'المنتجات والخدمات التي استخدمتها مؤخرا')}
-                        </p>
-
-                        {/* Recent Products/Services List */}
-                        <div className="space-y-2">
-                            <div className="space-y-2 max-h-40 overflow-y-auto">
-                                {settings.recentProductServices && settings.recentProductServices.length > 0 ? (
-                                    settings.recentProductServices.map((product, idx) => (
-                                        <div key={idx} className="p-3 bg-purple-50 rounded-lg flex justify-between items-center">
-                                            <span className="text-sm font-medium">{product.name}</span>
-                                            <span className="text-sm font-bold text-purple-600">{product.price.toFixed(2)} د.ج</span>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="p-4 text-center text-gray-400 text-sm">
-                                        {t('settings.noProducts', 'سيظهر هنا المنتجات عند إضافتها في الفواتير')}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Client Management Card */}
-                    <div className="bg-white rounded-3xl p-8 shadow-xl shadow-dz-dark/5 border border-gray-100 space-y-6">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="p-2 bg-pink-50 rounded-xl">
-                                <Brain className="h-5 w-5 text-pink-500" />
-                            </div>
-                            <h3 className="font-black text-lg text-dz-dark">{t('settings.clientManagement', 'إدارة العملاء')}</h3>
-                        </div>
-
-                        <p className="text-gray-500 text-sm">
-                            {t('settings.suggestedClients', 'العملاء الذين تعاملت معهم مؤخرا')}
-                        </p>
-
-                        {/* Recent Clients List */}
-                        <div className="space-y-2">
-                            <div className="space-y-2 max-h-40 overflow-y-auto">
-                                {settings.recentClients && settings.recentClients.length > 0 ? (
-                                    settings.recentClients.map((client, idx) => (
-                                        <div key={idx} className="p-3 bg-pink-50 rounded-lg flex flex-col gap-1">
-                                            <span className="text-sm font-medium">{client.name}</span>
-                                            {client.phone && <span className="text-xs text-gray-500">{client.phone}</span>}
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="p-4 text-center text-gray-400 text-sm">
-                                        {t('settings.noClients', 'سيظهر هنا العملاء عند إضافتهم في الفواتير')}
-                                    </div>
-                                )}
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Defaults & Behavior (Main Config Column) */}
-                <div className="md:col-span-2 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700延迟-150">
-                    <div className="bg-white rounded-3xl p-8 shadow-xl shadow-dz-dark/5 border border-gray-100">
-                        <div className="flex items-center gap-3 mb-8">
-                            <div className="p-2 bg-blue-50 rounded-xl">
-                                <Brain className="h-5 w-5 text-blue-500" />
+                {/* === RIGHT COLUMN: CONFIGURATION (Span 8) === */}
+                <div className="lg:col-span-8 space-y-8">
+
+                    {/* Settings & Defaults */}
+                    <div className="bg-white rounded-[2rem] p-8 md:p-10 shadow-xl shadow-dz-dark/5 border border-gray-100/60">
+                        <div className="flex items-center gap-3 mb-10">
+                            <div className="h-10 w-10 rounded-2xl bg-purple-50 flex items-center justify-center text-purple-500 shrink-0">
+                                <SettingsIcon className="h-5 w-5" />
                             </div>
-                            <h3 className="font-black text-lg text-dz-dark">{t('settings.defaults')} & {t('settings.behavior')}</h3>
+                            <div>
+                                <h3 className="font-extrabold text-lg text-dz-dark leading-tight">{t('settings.defaults')} & {t('settings.behavior')}</h3>
+                                <p className="text-xs font-bold text-gray-300 uppercase tracking-wider">{t('settings.kpi', 'Configuration')}</p>
+                            </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                            <div className="space-y-6">
-                                <div className="space-y-3 text-start">
-                                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 block px-1">
-                                        {t('settings.documentLanguage')}
-                                    </Label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
+
+                            {/* Generic Settings */}
+                            <div className="space-y-8">
+                                <div className="space-y-3">
+                                    <Label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('settings.documentLanguage')}</Label>
                                     <Select
                                         value={settings.defaultLanguage}
                                         onValueChange={(val: any) => updateField('defaultLanguage', val)}
                                     >
-                                        <SelectTrigger className="h-14 rounded-2xl border-gray-100 bg-gray-50/30 font-bold focus:bg-white transition-all text-start">
-                                            <SelectValue />
+                                        <SelectTrigger className="h-14 w-full bg-white border-gray-200 rounded-xl font-bold hover:border-purple-300 transition-colors focus:ring-4 focus:ring-purple-500/10">
+                                            <div className="flex items-center gap-3">
+                                                <Globe className="h-4 w-4 text-purple-500" />
+                                                <SelectValue />
+                                            </div>
                                         </SelectTrigger>
-                                        <SelectContent className="rounded-2xl border-gray-100">
-                                            <SelectItem value="ar" className="font-bold font-sans">العربية (Algeria)</SelectItem>
+                                        <SelectContent className="rounded-xl border-gray-100 shadow-xl">
+                                            <SelectItem value="ar" className="font-bold">العربية (Algeria)</SelectItem>
                                             <SelectItem value="fr" className="font-bold">Français</SelectItem>
                                             <SelectItem value="en" className="font-bold">English</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
 
-                                <div className="space-y-3 text-start">
-                                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 block px-1">
-                                        {t('settings.defaultVatRate')}
-                                    </Label>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        {[0, 9, 19].map((rate) => (
-                                            <Button
-                                                key={rate}
-                                                variant="ghost"
+                                <div className="space-y-3">
+                                    <Label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('settings.numberSpacing')}</Label>
+                                    <div className="flex flex-col gap-2">
+                                        {[
+                                            { id: 'space', label: '95 000.00' },
+                                            { id: 'comma', label: '95,000.00' },
+                                            { id: 'none', label: '95000.00' }
+                                        ].map((opt) => (
+                                            <button
+                                                key={opt.id}
+                                                onClick={() => updateField('numberFormat', opt.id as any)}
                                                 className={cn(
-                                                    "h-14 rounded-2xl font-black transition-all border border-transparent num-ltr",
-                                                    settings.defaultVatRate === rate
-                                                        ? "bg-dz-green text-white shadow-lg shadow-dz-green/20"
-                                                        : "bg-gray-50 text-gray-400 hover:bg-gray-100"
+                                                    "h-12 w-full px-4 rounded-xl font-bold transition-all flex items-center justify-between border-2",
+                                                    settings.numberFormat === opt.id
+                                                        ? "border-purple-500 bg-purple-50 text-purple-700"
+                                                        : "border-transparent bg-gray-50 text-gray-400 hover:bg-gray-100"
                                                 )}
-                                                onClick={() => updateField('defaultVatRate', rate)}
                                             >
-                                                {rate}%
-                                            </Button>
+                                                <span className="num-ltr text-sm">{opt.label}</span>
+                                                {settings.numberFormat === opt.id && <Check className="h-4 w-4" />}
+                                            </button>
                                         ))}
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="space-y-6">
-                                <div className="space-y-3 text-start">
-                                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 block px-1">
-                                        {t('settings.vatBehavior')}
-                                    </Label>
+                            {/* VAT Settings */}
+                            <div className="space-y-8">
+                                <div className="space-y-3">
+                                    <Label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('settings.vatBehavior')}</Label>
                                     <Select
                                         value={settings.vatBehavior}
                                         onValueChange={(val: any) => updateField('vatBehavior', val)}
                                     >
-                                        <SelectTrigger className="h-14 rounded-2xl border-gray-100 bg-gray-50/30 font-bold focus:bg-white transition-all text-start">
-                                            <SelectValue />
+                                        <SelectTrigger className="h-14 w-full bg-white border-gray-200 rounded-xl font-bold hover:border-purple-300 transition-colors focus:ring-4 focus:ring-purple-500/10">
+                                            <div className="flex items-center gap-3">
+                                                <Calculator className="h-4 w-4 text-purple-500" />
+                                                <SelectValue />
+                                            </div>
                                         </SelectTrigger>
-                                        <SelectContent className="rounded-2xl border-gray-100">
+                                        <SelectContent className="rounded-xl border-gray-100 shadow-xl">
                                             <SelectItem value="show" className="font-bold">{t('settings.vatShow')}</SelectItem>
                                             <SelectItem value="hide" className="font-bold">{t('settings.vatHide')}</SelectItem>
                                             <SelectItem value="inclusive" className="font-bold">{t('settings.vatInclusive')}</SelectItem>
@@ -367,64 +326,58 @@ const SettingsView: React.FC = () => {
                                     </Select>
                                 </div>
 
-                                <div className="space-y-3 text-start">
-                                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 block px-1">
-                                        {t('settings.numberSpacing')}
-                                    </Label>
-                                    <div className="grid grid-cols-1 gap-2">
-                                        {[
-                                            { id: 'space', label: '95 000.00' },
-                                            { id: 'comma', label: '95,000.00' },
-                                            { id: 'none', label: '95000.00' }
-                                        ].map((opt) => (
-                                            <Button
-                                                key={opt.id}
-                                                variant="ghost"
+                                <div className="space-y-3">
+                                    <Label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('settings.defaultVatRate')}</Label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {[0, 9, 19].map((rate) => (
+                                            <button
+                                                key={rate}
+                                                onClick={() => updateField('defaultVatRate', rate)}
                                                 className={cn(
-                                                    "h-12 justify-start px-4 rounded-xl font-bold transition-all border border-transparent",
-                                                    settings.numberFormat === opt.id
-                                                        ? "bg-dz-green/10 text-dz-green"
-                                                        : "bg-gray-50/50 text-gray-500 hover:bg-gray-50"
+                                                    "aspect-square rounded-2xl font-black transition-all flex flex-col items-center justify-center border-2",
+                                                    settings.defaultVatRate === rate
+                                                        ? "border-dz-green bg-dz-green text-white shadow-lg shadow-dz-green/20"
+                                                        : "border-transparent bg-gray-50 text-gray-400 hover:bg-gray-100"
                                                 )}
-                                                onClick={() => updateField('numberFormat', opt.id as any)}
                                             >
-                                                <span className="num-ltr">{opt.label}</span>
-                                                {settings.numberFormat === opt.id && <Check className="h-4 w-4 ms-auto" />}
-                                            </Button>
+                                                <span className="text-xl">{rate}</span>
+                                                <span className="text-[9px] opacity-60">%</span>
+                                            </button>
                                         ))}
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="mt-10 space-y-3 text-start">
-                            <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 block px-1">
-                                {t('settings.defaultFooter')}
-                            </Label>
-                            <Textarea
-                                value={settings.defaultFooter}
-                                onChange={(e) => updateField('defaultFooter', e.target.value)}
-                                className="resize-none h-32 rounded-2xl border-gray-100 bg-gray-50/30 focus:bg-white transition-all p-6 font-medium leading-relaxed text-start"
-                                placeholder="...e.g. Terms, Bank details, or warm thank you message"
-                            />
+                        <div className="mt-10 space-y-3">
+                            <Label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('settings.defaultFooter')}</Label>
+                            <div className="relative">
+                                <FileText className="absolute start-4 top-4 h-5 w-5 text-gray-300" />
+                                <Textarea
+                                    value={settings.defaultFooter}
+                                    onChange={(e) => updateField('defaultFooter', e.target.value)}
+                                    className="resize-none h-32 w-full ps-12 bg-white border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 rounded-2xl font-medium leading-relaxed"
+                                    placeholder={t('settings.defaultFooterPlaceholder', '...payment terms, bank details, or thank you note')}
+                                />
+                            </div>
                         </div>
                     </div>
 
-                    <div className="bg-dz-dark rounded-3xl p-8 border border-white/5 flex flex-col md:flex-row items-start gap-6 shadow-2xl text-start">
-                        <div className="p-3 bg-white/5 rounded-2xl shrink-0">
-                            <Brain className="h-6 w-6 text-dz-green" />
-                        </div>
-                        <div className="space-y-2 flex-1">
-                            <h4 className="text-white font-black uppercase tracking-widest text-xs">{t('settings.safetyTitle')}</h4>
-                            <p className="text-white/40 text-[11px] leading-relaxed max-w-lg">
+                    {/* Footer Info */}
+                    <div className="rounded-3xl p-6 border border-gray-100 bg-gradient-to-br from-gray-50 to-white flex items-center justify-between gap-4 opacity-70 hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                                <Leaf className="h-4 w-4" />
+                            </div>
+                            <p className="text-xs font-medium text-gray-500 leading-relaxed max-w-md">
                                 {t('settings.safetyDesc')}
                             </p>
                         </div>
-                        <div className="ms-auto flex items-center gap-2 px-3 py-1.5 bg-dz-green/10 rounded-full shrink-0">
-                            <Check className="h-3 w-3 text-dz-green" />
-                            <span className="text-[10px] font-black text-dz-green uppercase tracking-widest">{t('settings.autoSaved')}</span>
-                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-green-600 bg-green-50 px-2 py-1 rounded-md">
+                            {t('settings.autoSaved')}
+                        </span>
                     </div>
+
                 </div>
             </div>
         </div>
