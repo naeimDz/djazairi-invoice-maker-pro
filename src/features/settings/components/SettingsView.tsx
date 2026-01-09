@@ -24,6 +24,7 @@ import {
 import { useSettings } from '../hooks/useSettings';
 import { cn } from '@/lib/utils';
 import { AppSettings } from '../types/settings';
+import { getRecentProductServices, getRecentClients } from '@/core/localDbService';
 
 const SettingsView: React.FC = () => {
     const { t, i18n } = useTranslation();
@@ -33,7 +34,28 @@ const SettingsView: React.FC = () => {
 
     useEffect(() => {
         console.log("SettingsView RENDER: current VAT is", settings.defaultVatRate);
-    }, [settings.defaultVatRate]);
+        const loadRecentItems = async () => {
+            const recentProducts = await getRecentProductServices();
+            const recentClients = await getRecentClients();
+            console.log("Loaded products:", recentProducts);
+            console.log("Loaded clients:", recentClients);
+            updateSettings({ recentProductServices: recentProducts as any, recentClients: recentClients as any });
+        };
+        loadRecentItems();
+    }, []); // Empty dependency to run once on mount
+
+    // Reload when window regains focus (user switches back to Settings)
+    useEffect(() => {
+        const handleFocus = async () => {
+            console.log("Window focus: reloading products/clients");
+            const recentProducts = await getRecentProductServices();
+            const recentClients = await getRecentClients();
+            updateSettings({ recentProductServices: recentProducts as any, recentClients: recentClients as any });
+        };
+
+        window.addEventListener('focus', handleFocus);
+        return () => window.removeEventListener('focus', handleFocus);
+    }, [updateSettings]);
 
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -201,6 +223,70 @@ const SettingsView: React.FC = () => {
                                     placeholder="CPA / 00000 00000 00000000000 00"
                                     dir="ltr"
                                 />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Product/Service Management Card */}
+                    <div className="bg-white rounded-3xl p-8 shadow-xl shadow-dz-dark/5 border border-gray-100 space-y-6">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2 bg-purple-50 rounded-xl">
+                                <Brain className="h-5 w-5 text-purple-500" />
+                            </div>
+                            <h3 className="font-black text-lg text-dz-dark">{t('settings.productServiceManagement', 'إدارة المنتجات والخدمات')}</h3>
+                        </div>
+                        
+                        <p className="text-gray-500 text-sm">
+                            {t('settings.suggestedProducts', 'المنتجات والخدمات التي استخدمتها مؤخرا')}
+                        </p>
+
+                        {/* Recent Products/Services List */}
+                        <div className="space-y-2">
+                            <div className="space-y-2 max-h-40 overflow-y-auto">
+                                {settings.recentProductServices && settings.recentProductServices.length > 0 ? (
+                                    settings.recentProductServices.map((product, idx) => (
+                                        <div key={idx} className="p-3 bg-purple-50 rounded-lg flex justify-between items-center">
+                                            <span className="text-sm font-medium">{product.name}</span>
+                                            <span className="text-sm font-bold text-purple-600">{product.price.toFixed(2)} د.ج</span>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="p-4 text-center text-gray-400 text-sm">
+                                        {t('settings.noProducts', 'سيظهر هنا المنتجات عند إضافتها في الفواتير')}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Client Management Card */}
+                    <div className="bg-white rounded-3xl p-8 shadow-xl shadow-dz-dark/5 border border-gray-100 space-y-6">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2 bg-pink-50 rounded-xl">
+                                <Brain className="h-5 w-5 text-pink-500" />
+                            </div>
+                            <h3 className="font-black text-lg text-dz-dark">{t('settings.clientManagement', 'إدارة العملاء')}</h3>
+                        </div>
+
+                        <p className="text-gray-500 text-sm">
+                            {t('settings.suggestedClients', 'العملاء الذين تعاملت معهم مؤخرا')}
+                        </p>
+
+                        {/* Recent Clients List */}
+                        <div className="space-y-2">
+                            <div className="space-y-2 max-h-40 overflow-y-auto">
+                                {settings.recentClients && settings.recentClients.length > 0 ? (
+                                    settings.recentClients.map((client, idx) => (
+                                        <div key={idx} className="p-3 bg-pink-50 rounded-lg flex flex-col gap-1">
+                                            <span className="text-sm font-medium">{client.name}</span>
+                                            {client.phone && <span className="text-xs text-gray-500">{client.phone}</span>}
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="p-4 text-center text-gray-400 text-sm">
+                                        {t('settings.noClients', 'سيظهر هنا العملاء عند إضافتهم في الفواتير')}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

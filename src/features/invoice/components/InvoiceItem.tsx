@@ -5,6 +5,7 @@ import { Trash2 } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { InvoiceItem as InvoiceItemType } from '../types/invoice';
 import { Input } from '@/shared/ui/input';
+import { addProductService } from '@/core/localDbService';
 
 interface InvoiceItemProps {
   items: InvoiceItemType[];
@@ -13,6 +14,7 @@ interface InvoiceItemProps {
   onRemove: (id: string) => void;
   descriptionHistory?: string[];
   invoiceLang?: string;
+  onSaveProducts?: (items: InvoiceItemType[]) => void;
 }
 
 const InvoiceItem: React.FC<InvoiceItemProps> = ({
@@ -21,10 +23,28 @@ const InvoiceItem: React.FC<InvoiceItemProps> = ({
   onUpdate,
   onRemove,
   descriptionHistory = [],
-  invoiceLang = 'ar'
+  invoiceLang = 'ar',
+  onSaveProducts
 }) => {
   const { t } = useTranslation();
   const isRTL = invoiceLang === 'ar';
+  const [selectedItemId, setSelectedItemId] = React.useState<string | null>(null);
+
+  const handleDescriptionChange = (id: string, value: string) => {
+    onUpdate(id, 'description', value);
+  };
+
+  const handlePriceChange = (id: string, value: number) => {
+    onUpdate(id, 'price', value);
+  };
+
+  const handleItemBlur = (id: string) => {
+    // Save product/service on blur
+    const item = items.find(i => i.id === id);
+    if (item && item.description && item.price > 0 && onSaveProducts) {
+      onSaveProducts([item]);
+    }
+  };
 
   return (
     <div className="mb-4" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -48,6 +68,7 @@ const InvoiceItem: React.FC<InvoiceItemProps> = ({
                       <Input
                         value={item.description}
                         onChange={(e) => onUpdate(item.id, 'description', e.target.value)}
+                        onBlur={() => handleItemBlur(item.id)}
                         className="resize-none focus-visible:ring-dz-green border-none bg-transparent hover:bg-white focus:bg-white transition-all p-2 -ms-2 text-start font-sans h-auto min-h-[40px] w-full"
                         placeholder={t('invoiceItem.description')}
                         list={`descriptions-${item.id}`}
@@ -73,7 +94,8 @@ const InvoiceItem: React.FC<InvoiceItemProps> = ({
                       type="number"
                       min="0"
                       value={item.price}
-                      onChange={(e) => onUpdate(item.id, 'price', Number(e.target.value))}
+                      onChange={(e) => handlePriceChange(item.id, Number(e.target.value))}
+                      onBlur={() => handleItemBlur(item.id)}
                       className="text-center focus-visible:ring-dz-green num-ltr h-10 border-gray-100 bg-gray-50/30 focus:bg-white"
                     />
                   </td>

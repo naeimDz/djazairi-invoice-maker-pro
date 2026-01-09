@@ -10,6 +10,7 @@ import { Button } from '@/shared/ui/button';
 import { useInvoice } from '../hooks/useInvoice';
 import { useProductHistory } from '../hooks/useProductHistory';
 import { useSettings } from '../../settings/hooks/useSettings';
+import { addProductService } from '@/core/localDbService';
 import { cn } from '@/lib/utils';
 import { InvoiceItem as InvoiceItemType } from '../types/invoice';
 
@@ -186,6 +187,21 @@ const FormContent: React.FC<FormContentProps> = ({
   // UI direction (arrows) follows APP language
   const isAppRTL = i18n.language === 'ar';
 
+  const handleSaveProducts = async (itemsToSave: InvoiceItemType[]) => {
+    // Save all products to IndexedDB
+    for (const item of itemsToSave) {
+      if (item.description && item.price > 0) {
+        await addProductService({ name: item.description, price: item.price });
+      }
+    }
+  };
+
+  const handleContinueAndSave = async () => {
+    // Save all products before continuing to preview
+    await handleSaveProducts(items);
+    onContinue();
+  };
+
   return (
     <div className="space-y-8 pb-12 px-4">
       <div className="bg-white rounded-3xl p-6 md:p-10 shadow-xl shadow-dz-dark/5 border border-gray-100 space-y-10">
@@ -199,7 +215,11 @@ const FormContent: React.FC<FormContentProps> = ({
           status={status}
           setStatus={setStatus}
           duplicateInvoice={duplicateInvoice}
-          createNewInvoice={createNewInvoice}
+          createNewInvoice={async () => {
+            // Save all products before creating new invoice
+            await handleSaveProducts(items);
+            createNewInvoice();
+          }}
           isSaving={isSaving}
         />
 
@@ -223,12 +243,13 @@ const FormContent: React.FC<FormContentProps> = ({
             onRemove={removeItem}
             descriptionHistory={descriptionHistory}
             invoiceLang={invoiceLang}
+            onSaveProducts={handleSaveProducts}
           />
         </div>
 
         <div className="pt-10 border-t border-gray-50 flex justify-center md:justify-end">
           <Button
-            onClick={onContinue}
+            onClick={handleContinueAndSave}
             className="h-14 px-10 text-lg font-black bg-dz-green hover:bg-dz-green/90 shadow-2xl shadow-dz-green/20 rounded-2xl group transition-all hover:scale-105 active:scale-95"
           >
             {t('buttons.previewInvoice')}

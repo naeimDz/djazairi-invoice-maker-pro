@@ -22,6 +22,8 @@ export interface AppSettings {
     businessNIF: string;       // Numéro d'Identification Fiscale
     businessRC: string;        // Registre de Commerce
     businessBank: string;      // Bank account info (optional)
+    recentProductServices: { name: string; price: number; }[];
+    recentClients: { name: string; address?: string; phone?: string; nif?: string; rc?: string; }[];
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -38,5 +40,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     businessPhone: '',
     businessNIF: '',
     businessRC: '',
-    businessBank: ''
+    businessBank: '',
+    recentProductServices: [],
+    recentClients: []
 };

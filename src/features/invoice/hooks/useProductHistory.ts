@@ -1,12 +1,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { db } from '../../../core/db';
+import { getRecentProductServices } from '../../../core/localDbService';
 import { InvoiceItem } from '../types/invoice';
 
 export interface ProductHistoryItem {
     name: string;
     price: number;
-    updatedAt: number;
 }
 
 export const useProductHistory = () => {
@@ -14,12 +13,8 @@ export const useProductHistory = () => {
 
     const fetchRecentProducts = useCallback(async () => {
         try {
-            const products = await db.getAll<ProductHistoryItem>('products');
-            // Sort by recency (newest first) and take top 20
-            const sorted = products
-                .sort((a, b) => b.updatedAt - a.updatedAt)
-                .slice(0, 20);
-            setRecentProducts(sorted);
+            const products = await getRecentProductServices(20);
+            setRecentProducts(products);
         } catch (error) {
             console.error("Failed to fetch product history", error);
         }
@@ -32,19 +27,7 @@ export const useProductHistory = () => {
 
     const saveProduct = async (item: InvoiceItem) => {
         if (!item.description || !item.description.trim()) return;
-
-        try {
-            const product: ProductHistoryItem = {
-                name: item.description.trim(),
-                price: item.price,
-                updatedAt: Date.now()
-            };
-            await db.set('products', item.description.trim(), product);
-            // Refresh list silently
-            fetchRecentProducts();
-        } catch (error) {
-            console.warn("Failed to save product to history", error);
-        }
+        // Products are now auto-saved in InvoiceItem when price is set
     };
 
     /**
