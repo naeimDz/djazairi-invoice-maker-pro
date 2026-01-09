@@ -24,8 +24,9 @@ const InvoiceItem: React.FC<InvoiceItemProps> = ({
   productSuggestions = [],
   invoiceLang = 'ar'
 }) => {
-  const { t } = useTranslation();
-  const isRTL = invoiceLang === 'ar';
+  const { t, i18n } = useTranslation();
+  // UI direction should follow the APP language, not the invoice target language
+  const isRTL = i18n.language === 'ar';
 
   const handleDescriptionChange = (id: string, value: string) => {
     onUpdate(id, 'description', value);

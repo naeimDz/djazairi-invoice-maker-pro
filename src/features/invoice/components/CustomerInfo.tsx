@@ -5,7 +5,6 @@ import { Input } from '@/shared/ui/input';
 import { Textarea } from '@/shared/ui/textarea';
 import { UserCheck, ChevronDown } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
-import { addClient } from '@/core/localDbService';
 import { useClientHistory } from '../hooks/useClientHistory';
 
 interface CustomerInfoProps {
@@ -25,24 +24,9 @@ const CustomerInfo: React.FC<CustomerInfoProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
-  const { recentClients, searchClients, refreshHistory } = useClientHistory();
+  const { recentClients, searchClients } = useClientHistory();
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<typeof recentClients>([]);
-
-  // Auto-save client when name changes (debounced)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (customerName && customerName.trim()) {
-        addClient({
-          name: customerName,
-          address: customerAddress || undefined
-        }).then(() => {
-          refreshHistory();
-        });
-      }
-    }, 1000); // Debounce by 1 second
-    return () => clearTimeout(timer);
-  }, [customerName, customerAddress, refreshHistory]);
 
   // Update suggestions based on input
   useEffect(() => {

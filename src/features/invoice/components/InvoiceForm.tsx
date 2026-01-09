@@ -10,9 +10,10 @@ import { Button } from '@/shared/ui/button';
 import { useInvoice } from '../hooks/useInvoice';
 import { useProductHistory, ProductHistoryItem } from '../hooks/useProductHistory';
 import { useSettings } from '../../settings/hooks/useSettings';
-import { addProductService } from '@/core/localDbService';
+import { addProductService, addClient } from '@/core/localDbService';
 import { cn } from '@/lib/utils';
 import { InvoiceItem as InvoiceItemType } from '../types/invoice';
+import { useClientHistory } from '../hooks/useClientHistory';
 
 const InvoiceForm: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -186,23 +187,35 @@ const FormContent: React.FC<FormContentProps> = ({
   isSaving
 }) => {
   const { t, i18n } = useTranslation();
+  const { refreshHistory: refreshClientHistory } = useClientHistory();
+
   // UI direction (arrows) follows APP language
   const isAppRTL = i18n.language === 'ar';
 
-  const handleSaveProducts = async (itemsToSave: InvoiceItemType[]) => {
-    // Save all products to IndexedDB
-    for (const item of itemsToSave) {
-      if (item.description && item.price > 0) {
-        await addProductService({ name: item.description, price: item.price });
+  const handleSaveToHistory = async () => {
+    // 1. Save Products
+    for (const item of items) {
+      if (item.description.trim() && item.price > 0) {
+        await addProductService({ name: item.description.trim(), price: item.price });
       }
     }
-    // Refresh the product list so suggestions are up to date
+
+    // 2. Save Client
+    if (customerName.trim()) {
+      await addClient({
+        name: customerName.trim(),
+        address: customerAddress.trim() || undefined
+      });
+    }
+
+    // 3. Refresh both histories
     onProductsUpdated();
+    refreshClientHistory();
   };
 
-  const handleContinueAndSave = async () => {
-    // Save all products before continuing to preview
-    await handleSaveProducts(items);
+  const handlePreview = () => {
+    // We no longer save to history here, per user request. 
+    // Data is only learned when "New Invoice" is clicked.
     onContinue();
   };
 
@@ -221,8 +234,8 @@ const FormContent: React.FC<FormContentProps> = ({
           setStatus={setStatus}
           duplicateInvoice={duplicateInvoice}
           createNewInvoice={async () => {
-            // Save all products before creating new invoice
-            await handleSaveProducts(items);
+            // Save everything to history BEFORE resetting
+            await handleSaveToHistory();
             createNewInvoice();
           }}
           isSaving={isSaving}
@@ -253,7 +266,7 @@ const FormContent: React.FC<FormContentProps> = ({
 
         <div className="pt-10 border-t border-gray-50 flex justify-center md:justify-end">
           <Button
-            onClick={handleContinueAndSave}
+            onClick={handlePreview}
             className="h-14 px-10 text-lg font-black bg-dz-green hover:bg-dz-green/90 shadow-2xl shadow-dz-green/20 rounded-2xl group transition-all hover:scale-105 active:scale-95"
           >
             {t('buttons.previewInvoice')}

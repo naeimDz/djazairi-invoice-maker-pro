@@ -49,7 +49,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   const { t, i18n } = useTranslation();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
-  // UI direction follows app language, NOT the invoice document language
+  // UI direction follows app language
   const isUIRTL = i18n.language === 'ar';
 
   const langOptions = [
@@ -58,145 +58,167 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
     { code: 'en', label: 'English' }
   ];
 
-  const statusColors = {
-    draft: "bg-gray-100 text-gray-500",
-    sent: "bg-blue-100 text-blue-600",
-    paid: "bg-green-100 text-green-600"
+  const statusOptions = ['draft', 'sent', 'paid'] as const;
+
+  const checkIfEmpty = () => {
+    return !invoiceNumber && !customerName && (!invoiceDate || invoiceDate === new Date().toISOString().split('T')[0]);
   };
 
-  const statusIcons = {
-    draft: <Clock className="h-3 w-3" />,
-    sent: <Send className="h-3 w-3" />,
-    paid: <CheckCircle2 className="h-3 w-3" />
+  const handleNewInvoiceClick = () => {
+    if (checkIfEmpty()) {
+      // It's already empty, no need to do anything
+      return;
+    }
+    setShowConfirmDialog(true);
   };
 
   return (
-    <div className="flex flex-col gap-6" dir={isUIRTL ? 'rtl' : 'ltr'}>
-      {/* === Primary Toolbar: Language & Status (Compact, Top) === */}
-      <div className="flex flex-wrap items-center justify-between gap-4 print:hidden">
-        {/* Left: Language Switcher (Minimal) */}
-        <div className="flex items-center gap-1.5">
+    <div className="flex flex-col gap-8" dir={isUIRTL ? 'rtl' : 'ltr'}>
+      {/* === Top Toolbar: Actions & Language === */}
+      <div className="flex flex-wrap items-center justify-between gap-4 print:hidden border-b border-gray-100 pb-4">
+
+        {/* Left: Global Actions (New / Duplicate) - High Priority */}
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={handleNewInvoiceClick}
+            className="h-9 px-4 text-xs font-bold bg-dz-green text-white hover:bg-dz-green/90 rounded-full shadow-sm shadow-dz-green/20 transition-all hover:scale-105 active:scale-95 gap-2"
+          >
+            <span>+</span> {t('common.newInvoice', 'New Invoice')}
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={duplicateInvoice}
+            className="h-9 w-9 text-gray-400 hover:text-dz-dark hover:bg-gray-100 rounded-full transition-all"
+            title={t('settings.duplicate')}
+          >
+            <Copy className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Right: Language Switcher */}
+        <div className="flex items-center bg-gray-50/80 p-1 rounded-full border border-gray-100/50">
           {langOptions.map((lang) => (
             <button
               key={lang.code}
               onClick={() => setInvoiceLang(lang.code)}
               className={cn(
-                "h-8 w-8 rounded-full text-[10px] font-black uppercase transition-all flex items-center justify-center",
+                "h-7 px-3 rounded-full text-[10px] font-black uppercase transition-all flex items-center justify-center relative z-10",
                 invoiceLang === lang.code
-                  ? "bg-dz-green text-white shadow-lg shadow-dz-green/30"
-                  : "bg-gray-100 text-gray-400 hover:bg-gray-200"
-              )}
-              title={lang.label}
-            >
-              {lang.code.substring(0, 2).toUpperCase()}
-            </button>
-          ))}
-        </div>
-
-        {/* Right: Status Chips (Clean, Icon-focused) */}
-        <div className="flex items-center gap-1.5">
-          {(['draft', 'sent', 'paid'] as const).map((s) => (
-            <button
-              key={s}
-              onClick={() => setStatus(s)}
-              className={cn(
-                "h-8 px-3 rounded-full text-[10px] font-bold flex items-center gap-1.5 transition-all",
-                status === s
-                  ? statusColors[s] + " shadow-sm"
-                  : "bg-gray-50 text-gray-400 hover:bg-gray-100"
+                  ? "bg-white text-dz-green shadow-sm ring-1 ring-gray-200/50"
+                  : "text-gray-400 hover:text-gray-600"
               )}
             >
-              {statusIcons[s]}
-              <span className="hidden sm:inline">{t(`settings.status${s.charAt(0).toUpperCase() + s.slice(1)}`)}</span>
+              {lang.code.toUpperCase()}
             </button>
           ))}
         </div>
       </div>
 
-      {/* === Hero Section: Title + Actions (Clean, Breathable) === */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-8 border-b border-gray-100/50">
-        {/* Title + Save Indicator */}
-        <div className="flex items-baseline gap-4 flex-wrap">
-          <h1 className="text-5xl md:text-7xl font-black font-heading text-dz-green tracking-tighter leading-none animate-in fade-in slide-in-from-s-4 duration-700">
-            {t('invoiceHeader.title')}
-          </h1>
+      {/* === Main Header Area === */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
 
-          {/* Minimal Save Indicator (Inline with Title) */}
-          <span className={cn(
-            "text-[9px] font-bold uppercase tracking-widest transition-all",
-            isSaving ? "text-gray-400 animate-pulse" : "text-gray-300"
-          )}>
-            {isSaving ? t('common.saving', '●') : <CheckCircle2 className="h-3 w-3 inline opacity-50" />}
-          </span>
+        {/* Title Section */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+            <h1 className="text-5xl md:text-6xl font-black text-dz-dark tracking-tighter leading-none">
+              {t('invoiceHeader.title')} <span className="text-dz-green">.</span>
+            </h1>
+
+            {/* Save Indicator */}
+            <span className={cn(
+              "text-[9px] font-bold uppercase tracking-widest mt-4 transition-all",
+              isSaving ? "text-dz-green animate-pulse" : "text-gray-300"
+            )}>
+              {isSaving ? t('common.saving', 'SAVING...') : <CheckCircle2 className="h-4 w-4" />}
+            </span>
+          </div>
+
+          {/* Segmented Status Control */}
+          <div className="flex items-center bg-gray-50 border border-gray-100 p-1 rounded-xl w-fit">
+            {statusOptions.map((s) => (
+              <button
+                key={s}
+                onClick={() => setStatus(s)}
+                className={cn(
+                  "h-8 px-4 rounded-lg text-xs font-bold transition-all relative",
+                  status === s
+                    ? "bg-white text-dz-dark shadow-sm ring-1 ring-black/5"
+                    : "text-gray-400 hover:text-gray-600"
+                )}
+              >
+                {/* Status Dot */}
+                {status === s && (
+                  <span className={cn(
+                    "inline-block w-1.5 h-1.5 rounded-full me-2 mb-0.5",
+                    s === 'paid' ? "bg-green-500" : s === 'sent' ? "bg-blue-500" : "bg-gray-400"
+                  )} />
+                )}
+                {t(`settings.status${s.charAt(0).toUpperCase() + s.slice(1)}`)}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Invoice Metadata Inputs (Number + Date) */}
-        <div className="flex flex-wrap items-end gap-3">
+        {/* Inputs (Number & Date) */}
+        <div className="flex items-end gap-3 bg-white p-2 rounded-2xl border border-gray-100 shadow-sm">
           <div className="space-y-1">
-            <label htmlFor="invoiceNumber" className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block">
+            <label htmlFor="invoiceNumber" className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block px-1">
               {t('invoiceHeader.number')}
             </label>
-            <div className="relative">
-              <span className="absolute inset-y-0 start-3 flex items-center text-gray-400 text-sm font-bold pointer-events-none">#</span>
+            <div className="relative group">
+              <span className="absolute inset-y-0 start-3 flex items-center text-gray-300 group-focus-within:text-dz-green text-sm font-bold pointer-events-none transition-colors">#</span>
               <Input
                 id="invoiceNumber"
                 value={invoiceNumber}
                 onChange={(e) => setInvoiceNumber(e.target.value)}
-                className="ps-8 h-11 w-28 bg-white border-gray-200 focus:border-dz-green focus:ring-dz-green/20 rounded-xl font-bold text-lg"
+                className="ps-7 h-10 w-24 bg-gray-50/50 border-gray-100 focus:bg-white focus:border-dz-green focus:ring-dz-green/20 rounded-xl font-bold text-base transition-all"
                 placeholder="001"
               />
             </div>
           </div>
 
+          <div className="w-px h-10 bg-gray-100 mx-1 self-center"></div>
+
           <div className="space-y-1">
-            <label htmlFor="invoiceDate" className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block">
+            <label htmlFor="invoiceDate" className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block px-1">
               {t('invoiceHeader.date')}
             </label>
-            <div className="relative">
-              <Input
-                id="invoiceDate"
-                type="date"
-                value={invoiceDate}
-                onChange={(e) => setInvoiceDate(e.target.value)}
-                className="h-11 w-40 bg-white border-gray-200 focus:border-dz-green focus:ring-dz-green/20 rounded-xl font-medium num-ltr"
-              />
-            </div>
-          </div>
-
-          {/* Quick Actions: Grouped Minimally */}
-          <div className="flex items-center gap-1 ms-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={duplicateInvoice}
-              className="h-10 w-10 text-gray-400 hover:text-dz-green hover:bg-dz-green/5 rounded-xl"
-              title={t('settings.duplicate')}
-            >
-              <Copy className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                // If the invoice is mostly empty, just reset without asking
-                const isEmpty = !invoiceNumber && !customerName && (!invoiceDate || invoiceDate === new Date().toISOString().split('T')[0]);
-
-                if (isEmpty) {
-                  createNewInvoice();
-                  return;
-                }
-
-                if (window.confirm(t('common.confirmNewInvoice', 'Are you sure you want to start a new invoice? Current changes are auto-saved in history.'))) {
-                  createNewInvoice();
-                }
-              }}
-              className="h-10 px-4 text-xs font-bold text-dz-green hover:bg-dz-green hover:text-white rounded-xl transition-all"
-            >
-              + {t('common.newInvoice', 'جديد')}
-            </Button>
+            <Input
+              id="invoiceDate"
+              type="date"
+              value={invoiceDate}
+              onChange={(e) => setInvoiceDate(e.target.value)}
+              className="h-10 w-36 bg-gray-50/50 border-gray-100 focus:bg-white focus:border-dz-green focus:ring-dz-green/20 rounded-xl font-medium text-sm num-ltr transition-all"
+            />
           </div>
         </div>
       </div>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent className="rounded-2xl border-none shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-2xl font-black tracking-tight">{t('common.confirmNewInvoice', 'Start New Invoice?')}</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-500">
+              {t('common.confirmNewInvoiceDesc', 'This will clear all current details. Make sure you have finished with this invoice.')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="rounded-xl border-gray-100 font-bold hover:bg-gray-50">{t('common.cancel', 'Cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                createNewInvoice();
+                setShowConfirmDialog(false);
+              }}
+              className="bg-dz-green hover:bg-dz-green/90 rounded-xl font-bold text-white shadow-lg shadow-dz-green/20"
+            >
+              {t('common.confirm', 'Yes, Continue')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
