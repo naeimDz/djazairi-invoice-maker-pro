@@ -1,11 +1,11 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/shared/ui/button';
-import { Printer, Save } from 'lucide-react';
+import { Printer, Save, MessageSquare, Copy, Check, Download } from 'lucide-react';
 import { InvoiceItem } from '../types/invoice';
 import { useSettings } from '../../settings/hooks/useSettings';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner'; // Assuming sonner is available or use a simple alert/toast logic
 
 interface InvoicePreviewProps {
   invoiceNumber: string;
@@ -24,20 +24,19 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   items,
   invoiceLang = 'ar'
 }) => {
-  const { i18n } = useTranslation();
-  const { settings } = useSettings(); // Directly from context for real-time reactivity
+  const { i18n, t } = useTranslation();
+  const { settings } = useSettings();
+  const [copied, setCopied] = useState(false);
 
   const isDocRTL = invoiceLang === 'ar';
 
-  // VAT Behavior flags with strict casting
+  // VAT Behavior flags
   const showTVA = settings.vatBehavior === 'show';
   const isInclusive = settings.vatBehavior === 'inclusive';
   const rawVatRate = Number(settings.defaultVatRate);
   const vatRate = isNaN(rawVatRate) ? 0 : rawVatRate;
 
-  console.log(`Preview: Logic Run - VAT: ${vatRate}, Mode: ${settings.vatBehavior}`);
-
-  // Helper to get translation for the specific document language
+  // Helper to get translation
   const getDocT = (path: string, defaultValue?: string) => {
     const keys = path.split('.');
     let result: any = i18n.getResourceBundle(invoiceLang, 'translation');
@@ -49,45 +48,21 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   };
 
   /**
-   * CALCULATIONS (Algerian Standard)
-   * We calculate HT and TTC for each row to ensure precision.
+   * CALCULATIONS
    */
   const processedItems = items.map(item => {
     const price = Number(item.price) || 0;
     const qty = Number(item.quantity) || 0;
-
-    // Logic:
-    // If Inclusive: price is TTC. HT = price / (1 + vatRate/100)
-    // If Not Inclusive: price is HT. TTC = price * (1 + vatRate/100)
     const priceHT = isInclusive ? price / (1 + vatRate / 100) : price;
     const totalHT = priceHT * qty;
     const totalTTC = isInclusive ? price * qty : totalHT * (1 + vatRate / 100);
     const taxAmount = totalTTC - totalHT;
 
-    return {
-      ...item,
-      priceHT,
-      totalHT,
-      totalTTC,
-      taxAmount
-    };
+    return { ...item, priceHT, totalHT, totalTTC, taxAmount };
   });
 
   const subtotalHT = processedItems.reduce((sum, item) => sum + item.totalHT, 0);
-  const totalVAT = processedItems.reduce((sum, item) => sum + item.taxAmount, 0);
   const grandTotalTTC = processedItems.reduce((sum, item) => sum + item.totalTTC, 0);
-
-  const handlePrint = () => window.print();
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('fr-DZ', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    }).format(date);
-  };
 
   const formatAmount = (amount: number) => {
     let formatted = new Intl.NumberFormat('fr-DZ', {
@@ -95,24 +70,50 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({
       maximumFractionDigits: 2,
     }).format(amount);
 
-    if (settings.numberFormat === 'comma') {
-      formatted = formatted.replace(/\s/g, ',');
-    } else if (settings.numberFormat === 'none') {
-      formatted = formatted.replace(/\s/g, '');
-    }
+    if (settings.numberFormat === 'comma') formatted = formatted.replace(/\s/g, ',');
+    else if (settings.numberFormat === 'none') formatted = formatted.replace(/\s/g, '');
 
     const currency = getDocT('invoiceItem.currency');
     return settings.currencyPlacement === 'before' ? `${currency} ${formatted}` : `${formatted} ${currency}`;
   };
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    return new Intl.DateTimeFormat('fr-DZ', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(dateString));
+  };
+
+  // --- SMART FEATURES ---
+
+  // 1. Smart Filename
+  useEffect(() => {
+    const originalTitle = document.title;
+    const cleanCustomer = customerName ? customerName.replace(/[^a-z0-9\u0600-\u06FF]/gi, '_') : 'Client';
+    const smartName = `Invoice-${invoiceNumber || 'Draft'}-${cleanCustomer}`;
+    document.title = smartName;
+    return () => { document.title = originalTitle; };
+  }, [invoiceNumber, customerName]);
+
+  const handlePrint = () => window.print();
+
+  // 2. WhatsApp Share
+  const handleShareWhatsApp = () => {
+    const text = `*Invoice #${invoiceNumber}*\nDate: ${formatDate(invoiceDate)}\nClient: ${customerName}\n\n*Total: ${formatAmount(grandTotalTTC)}*\n\nThank you for your business!`;
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  };
+
+  // 3. Copy Summary
+  const handleCopySummary = () => {
+    const text = `Invoice #${invoiceNumber}\nDate: ${formatDate(invoiceDate)}\nClient: ${customerName}\nTotal: ${formatAmount(grandTotalTTC)}`;
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <div
-      className={cn(
-        "bg-white rounded-lg p-8 invoice-paper print:shadow-none printable-invoice min-h-[1100px]",
-        isDocRTL ? "rtl" : "ltr"
-      )}
-      dir={isDocRTL ? "rtl" : "ltr"}
-    >
+    <div className={cn("bg-white rounded-lg p-8 invoice-paper print:shadow-none printable-invoice min-h-[1100px]", isDocRTL ? "rtl" : "ltr")} dir={isDocRTL ? "rtl" : "ltr"}>
+      {/* ... (Header Content - Unchanged mostly) ... */}
+
       {/* === HEADER ROW: Logo + Invoice Title/Number/Date === */}
       <div className="flex justify-between items-start mb-6 pb-4 border-b-2 border-dz-green/20">
         {/* Left: Logo (if exists) */}
@@ -226,7 +227,7 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({
                 {getDocT('invoiceItem.tax')}
                 <span className="bg-dz-green text-white px-1.5 py-0.5 rounded text-[9px]">{vatRate}%</span>
               </span>
-              <span className="num-ltr font-black text-dz-green">{formatAmount(totalVAT)}</span>
+              <span className="num-ltr font-black text-dz-green">{formatAmount(processedItems.reduce((sum, item) => sum + item.taxAmount, 0))}</span>
             </div>
           )}
 
@@ -263,14 +264,48 @@ const InvoicePreview: React.FC<InvoicePreviewProps> = ({
         </div>
       </div>
 
-      <div className="print:hidden mt-20 flex flex-col md:flex-row justify-center items-center gap-6">
+      {/* === ACTION BUTTONS (Hidden in Print) === */}
+      <div className="print:hidden mt-20 flex flex-wrap justify-center items-center gap-4">
+        {/* WhatsApp */}
         <Button
-          onClick={handlePrint}
-          className="h-18 px-14 text-2xl font-black bg-dz-green hover:bg-dz-green/90 shadow-2xl shadow-dz-green/30 rounded-3xl gap-4 transition-all hover:scale-105 active:scale-95 w-full md:w-auto"
+          onClick={handleShareWhatsApp}
+          variant="outline"
+          className="h-16 px-8 rounded-2xl gap-3 border-gray-200 text-gray-500 hover:text-green-600 hover:border-green-200 hover:bg-green-50"
+          title="Share on WhatsApp"
         >
-          <Printer className="h-7 w-7" />
-          {getDocT('buttons.print')}
+          <MessageSquare className="h-5 w-5" />
+          <span className="hidden md:inline font-bold">WhatsApp</span>
         </Button>
+
+        {/* Copy */}
+        <Button
+          onClick={handleCopySummary}
+          variant="outline"
+          className="h-16 px-8 rounded-2xl gap-3 border-gray-200 text-gray-500 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50"
+          title="Copy Summary"
+        >
+          {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
+          <span className="hidden md:inline font-bold">{copied ? 'Copied' : 'Copy'}</span>
+        </Button>
+
+        {/* Print / Save PDF */}
+        <div className="flex gap-2 bg-dz-green p-1.5 rounded-[1.5rem] shadow-2xl shadow-dz-green/30 hover:scale-105 transition-transform">
+          <Button
+            onClick={handlePrint}
+            className="h-14 px-8 text-lg font-black bg-transparent hover:bg-white/10 text-white rounded-2xl gap-3"
+          >
+            <Download className="h-5 w-5" />
+            {t('buttons.savePdf', 'Save PDF')}
+          </Button>
+          <div className="w-px bg-white/20 my-2"></div>
+          <Button
+            onClick={handlePrint}
+            className="h-14 px-6 bg-transparent hover:bg-white/10 text-white rounded-2xl"
+            title={getDocT('buttons.print')}
+          >
+            <Printer className="h-6 w-6" />
+          </Button>
+        </div>
       </div>
     </div>
   );
